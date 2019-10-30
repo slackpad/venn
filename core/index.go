@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/hashicorp/go-hclog"
 	"github.com/ryanuber/columnize"
 	bolt "go.etcd.io/bbolt"
@@ -37,6 +38,26 @@ func IndexAdd(logger hclog.Logger, dbPath, indexName, rootPath string) error {
 }
 
 func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
+	count := 0
+	err := filepath.Walk(rootPath,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if info.IsDir() {
+				return nil
+			}
+
+			count++
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+
+	bar := pb.StartNew(count)
+	defer bar.Finish()
 	return filepath.Walk(rootPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -83,7 +104,12 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 				}
 			}
 			entry.Paths[path] = struct{}{}
-			return putEntry(b, hash, entry)
+			if err := putEntry(b, hash, entry); err != nil {
+				return err
+			}
+
+			bar.Increment()
+			return nil
 		})
 }
 
