@@ -25,6 +25,7 @@ func main() {
 		"index list":        venncmd.IndexList(logger),
 		"index materialize": venncmd.IndexMaterialize(logger),
 		"index stats":       venncmd.IndexStats(logger),
+		"set difference":    venncmd.SetDifference(logger),
 	}
 
 	exitStatus, err := c.Run()
