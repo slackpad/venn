@@ -81,22 +81,22 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 			}
 			hash := h.Sum(nil)
 
-			// Grab the first part of the file and try to determine its mime type.
-			if _, err := f.Seek(0, 0); err != nil {
-				return fmt.Errorf("Failed to seek %q: %v", path, err)
-			}
-			head := make([]byte, 512)
-			if _, err := f.Read(head); err != nil {
-				return fmt.Errorf("Failed to scan %q: %v", path, err)
-			}
-			contentType := http.DetectContentType(head)
-			contentType = strings.Split(contentType, ";")[0]
-
 			entry, err := getEntry(b, hash)
 			if err != nil {
 				return err
 			}
 			if entry == nil {
+				// Grab the first part of the file and try to determine its mime type.
+				if _, err := f.Seek(0, 0); err != nil {
+					return fmt.Errorf("Failed to seek %q: %v", path, err)
+				}
+				head := make([]byte, 512)
+				if _, err := f.Read(head); err != nil {
+					return fmt.Errorf("Failed to scan %q: %v", path, err)
+				}
+				contentType := http.DetectContentType(head)
+				contentType = strings.Split(contentType, ";")[0]
+
 				entry = &indexEntry{
 					Paths:       make(map[string]struct{}),
 					Size:        info.Size(),
