@@ -6,23 +6,23 @@ import (
 	"github.com/slackpad/venn/core"
 )
 
-func Materialize(logger hclog.Logger) cli.CommandFactory {
+func IndexMaterialize(logger hclog.Logger) cli.CommandFactory {
 	return func() (cli.Command, error) {
-		return &materialize{
+		return &indexMaterialize{
 			logger: logger,
 		}, nil
 	}
 }
 
-type materialize struct {
+type indexMaterialize struct {
 	logger hclog.Logger
 }
 
-func (c *materialize) Synopsis() string {
+func (c *indexMaterialize) Synopsis() string {
 	return "Materializes an index into a folder"
 }
 
-func (c *materialize) Help() string {
+func (c *indexMaterialize) Help() string {
 	return `
 Copies without duplicates all indexed files into the target path.
 
@@ -33,7 +33,7 @@ indexNme: Name of index to use
 rootPath: Path of the root folder to target`
 }
 
-func (c *materialize) Run(args []string) int {
+func (c *indexMaterialize) Run(args []string) int {
 	if len(args) != 3 {
 		return cli.RunResultHelp
 	}

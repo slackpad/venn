@@ -20,11 +20,11 @@ func main() {
 	c := cli.NewCLI(appName, appVersion)
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
-		"index add":    venncmd.IndexAdd(logger),
-		"index delete": venncmd.IndexDelete(logger),
-		"index list":   venncmd.IndexList(logger),
-		"index stats":  venncmd.IndexStats(logger),
-		"materialize":  venncmd.Materialize(logger),
+		"index add":         venncmd.IndexAdd(logger),
+		"index delete":      venncmd.IndexDelete(logger),
+		"index list":        venncmd.IndexList(logger),
+		"index materialize": venncmd.IndexMaterialize(logger),
+		"index stats":       venncmd.IndexStats(logger),
 	}
 
 	exitStatus, err := c.Run()
