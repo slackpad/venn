@@ -1,6 +1,8 @@
 package core
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -56,25 +58,17 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 
 			name := fmt.Sprintf("%x%s", k, ext)
 			dst := filepath.Join(dir, name)
-			info, err := os.Stat(dst)
+			_, err = os.Stat(dst)
 			if os.IsNotExist(err) {
 				// Fall through, we need to copy the file.
 			} else if err != nil {
 				return err
 			} else {
-				// File exists, we might be able to skip.
-				size := info.Size()
-				if size != entry.Size {
-					logger.Warn("Sizes don't match, copying again",
-						"path", src, "old_size", size, "new_size", entry.Size)
-				} else {
-					logger.Debug("Skipping copy of existing file",
-						"path", src)
-					continue FILES
-				}
+				logger.Debug("Skipping copy of existing file", "path", src)
+				continue FILES
 			}
 
-			if err := copyFile(src, dst); err != nil {
+			if err := copyFile(k, src, dst); err != nil {
 				return fmt.Errorf("Failed to copy %q: %v", src, err)
 			}
 
@@ -86,7 +80,7 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 				for i, src := range paths {
 					name = fmt.Sprintf("%d%s", i, ext)
 					dst = filepath.Join(dir, name)
-					if err := copyFile(src, dst); err != nil {
+					if err := copyFile(k, src, dst); err != nil {
 						return fmt.Errorf("Failed to copy %q: %v", src, err)
 					}
 				}
@@ -99,7 +93,7 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 	})
 }
 
-func copyFile(src, dst string) error {
+func copyFile(hash []byte, src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -109,7 +103,10 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(tmp, in)
+
+	h := sha256.New()
+	tee := io.TeeReader(in, h)
+	_, err = io.Copy(tmp, tee)
 	if err != nil {
 		tmp.Close()
 		os.Remove(tmp.Name())
@@ -119,6 +116,11 @@ func copyFile(src, dst string) error {
 		os.Remove(tmp.Name())
 		return err
 	}
+
+	if !bytes.Equal(hash, h.Sum(nil)) {
+		return fmt.Errorf("Hash does not match, index is stale")
+	}
+
 	if err := os.Rename(tmp.Name(), dst); err != nil {
 		return err
 	}
