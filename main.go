@@ -14,7 +14,7 @@ var appVersion = "0.0.1"
 func main() {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:  appName,
-		Level: hclog.LevelFromString("DEBUG"),
+		Level: hclog.LevelFromString("INFO"),
 	})
 
 	c := cli.NewCLI(appName, appVersion)
