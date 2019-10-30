@@ -1,0 +1,36 @@
+package main
+
+import (
+	"os"
+
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/mitchellh/cli"
+	venncmd "github.com/slackpad/venn/cmd"
+)
+
+var appName = "venn"
+var appVersion = "0.0.1"
+
+func main() {
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name:  appName,
+		Level: hclog.LevelFromString("DEBUG"),
+	})
+
+	c := cli.NewCLI(appName, appVersion)
+	c.Args = os.Args[1:]
+	c.Commands = map[string]cli.CommandFactory{
+		"index add":    venncmd.IndexAdd(logger),
+		"index delete": venncmd.IndexDelete(logger),
+		"index list":   venncmd.IndexList(logger),
+		"index stats":  venncmd.IndexStats(logger),
+		"materialize":  venncmd.Materialize(logger),
+	}
+
+	exitStatus, err := c.Run()
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	os.Exit(exitStatus)
+}
