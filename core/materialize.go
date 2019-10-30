@@ -28,6 +28,7 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 
 		bar := pb.StartNew(b.Stats().KeyN)
 		c := b.Cursor()
+	FILES:
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			entry, err := decodeEntry(v)
 			if err != nil {
@@ -55,6 +56,24 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 
 			name := fmt.Sprintf("%x%s", k, ext)
 			dst := filepath.Join(dir, name)
+			info, err := os.Stat(dst)
+			if os.IsNotExist(err) {
+				// Fall through, we need to copy the file.
+			} else if err != nil {
+				return err
+			} else {
+				// File exists, we might be able to skip.
+				size := info.Size()
+				if size != entry.Size {
+					logger.Warn("Sizes don't match, copying again",
+						"path", src, "old_size", size, "new_size", entry.Size)
+				} else {
+					logger.Debug("Skipping copy of existing file",
+						"path", src)
+					continue FILES
+				}
+			}
+
 			if err := copyFile(src, dst); err != nil {
 				return fmt.Errorf("Failed to copy %q: %v", src, err)
 			}
