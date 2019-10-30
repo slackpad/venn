@@ -26,8 +26,8 @@ func (c *indexList) Help() string {
 	return `
 venn index list <dbPath> <indexName>
 	
-dbPath:   Path to the database file
-indexNme: Name of index to use`
+dbPath:    Path to the database file
+indexName: Name of index to use`
 }
 
 func (c *indexList) Run(args []string) int {

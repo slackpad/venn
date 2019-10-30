@@ -26,8 +26,8 @@ func (c *indexDelete) Help() string {
 	return `
 venn index delete <dbPath> <indexName>
 	
-dbPath:   Path to the database file
-indexNme: Name of index to delete`
+dbPath:    Path to the database file
+indexName: Name of index to delete`
 }
 
 func (c *indexDelete) Run(args []string) int {

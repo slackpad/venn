@@ -28,9 +28,9 @@ Copies without duplicates all indexed files into the target path.
 
 venn materialize <dbPath> <indexName> <rootPath>
 	
-dbPath:   Path to the database file
-indexNme: Name of index to use
-rootPath: Path of the root folder to target`
+dbPath:    Path to the database file
+indexName: Name of index to use
+rootPath:  Path of the root folder to target`
 }
 
 func (c *indexMaterialize) Run(args []string) int {

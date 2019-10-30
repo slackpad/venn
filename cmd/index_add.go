@@ -30,9 +30,9 @@ files will be added to it.
 
 venn index add <dbPath> <indexName> <rootPath>
 	
-dbPath:   Path to the database file (will create or append)
-indexNme: Name of index to use
-rootPath: Path of the root folder to scan`
+dbPath:    Path to the database file (will create or append)
+indexName: Name of index to use
+rootPath:  Path of the root folder to scan`
 }
 
 func (c *indexAdd) Run(args []string) int {
