@@ -26,8 +26,8 @@ func (c *indexStats) Help() string {
 	return `
 venn index stats <dbPath> <indexName>
 	
-dbPath:   Path to the database file
-indexNme: Name of index to use`
+dbPath:    Path to the database file
+indexName: Name of index to use`
 }
 
 func (c *indexStats) Run(args []string) int {
