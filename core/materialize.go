@@ -40,7 +40,7 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 			f0 := fmt.Sprintf("%02x", k[0])
 			f1 := fmt.Sprintf("%02x", k[1])
 			dir := filepath.Join(rootPath, f0, f1)
-			if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+			if err := os.MkdirAll(dir, 0755); err != nil {
 				return err
 			}
 
@@ -74,7 +74,7 @@ func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error 
 
 			if len(paths) > 1 {
 				dir = filepath.Join(rootPath, "_dups", f0, f1, fmt.Sprintf("%x", k))
-				if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+				if err := os.MkdirAll(dir, 0755); err != nil {
 					return err
 				}
 				for i, src := range paths {
