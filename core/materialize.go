@@ -117,12 +117,23 @@ func copyFile(hash []byte, src, dst string) error {
 		return err
 	}
 
+	// Make sure it landed with the expected hash, otherwise the index
+	// is out of date and we will corrupt our content addressable layout.
 	if !bytes.Equal(hash, h.Sum(nil)) {
 		return fmt.Errorf("Hash does not match, index is stale")
 	}
-
 	if err := os.Rename(tmp.Name(), dst); err != nil {
 		return err
 	}
+
+	// Keep the time from the source file.
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	if err := os.Chtimes(dst, info.ModTime(), info.ModTime()); err != nil {
+		return err
+	}
+
 	return nil
 }
