@@ -90,12 +90,18 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 				if _, err := f.Seek(0, 0); err != nil {
 					return fmt.Errorf("Failed to seek %q: %v", path, err)
 				}
-				head := make([]byte, 512)
-				if _, err := f.Read(head); err != nil {
-					return fmt.Errorf("Failed to scan %q: %v", path, err)
+
+				// Only try if there's enough in there to classify, otherwise we will
+				// get EOF errors.
+				contentType := "application/octet-stream"
+				if info.Size() >= 512 {
+					head := make([]byte, 512)
+					if _, err := f.Read(head); err != nil {
+						return fmt.Errorf("Failed to scan %q: %v", path, err)
+					}
+					contentType = http.DetectContentType(head)
+					contentType = strings.Split(contentType, ";")[0]
 				}
-				contentType := http.DetectContentType(head)
-				contentType = strings.Split(contentType, ";")[0]
 
 				entry = &indexEntry{
 					Paths:       make(map[string]struct{}),
