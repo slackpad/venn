@@ -28,7 +28,7 @@ func IndexAdd(logger hclog.Logger, dbPath, indexName, rootPath string) error {
 	defer db.Close()
 
 	return db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists(bucketForIndex(indexName))
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
 		if err != nil {
 			return err
 		}
@@ -127,9 +127,9 @@ func IndexList(logger hclog.Logger, dbPath, indexName string) error {
 	defer db.Close()
 
 	return db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(bucketForIndex(indexName))
-		if b == nil {
-			return fmt.Errorf("Index %q does not exist", indexName)
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
+		if err != nil {
+			return err
 		}
 
 		c := b.Cursor()
@@ -165,9 +165,9 @@ func IndexStats(logger hclog.Logger, dbPath, indexName string) error {
 		dups := 0
 		types := make(map[string]int)
 
-		b := tx.Bucket(bucketForIndex(indexName))
-		if b == nil {
-			return fmt.Errorf("Index %q does not exist", indexName)
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
+		if err != nil {
+			return err
 		}
 
 		c := b.Cursor()
@@ -210,11 +210,6 @@ func IndexDelete(logger hclog.Logger, dbPath, indexName string) error {
 	defer db.Close()
 
 	return db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket(bucketForIndex(indexName))
-		if b == nil {
-			return fmt.Errorf("Index %q does not exist", indexName)
-		}
-
-		return tx.DeleteBucket(bucketForIndex(indexName))
+		return deleteBucketForIndex(tx, indexName)
 	})
 }

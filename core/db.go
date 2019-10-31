@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -11,6 +12,54 @@ type indexEntry struct {
 	Paths       map[string]struct{}
 	Size        int64
 	ContentType string
+}
+
+func getBucketForIndex(tx *bolt.Tx, indexName, subName string) (*bolt.Bucket, error) {
+	containerKey := []byte("INDEXES")
+	indexKey := []byte(indexName)
+	subKey := []byte(subName)
+
+	if tx.Writable() {
+		all, err := tx.CreateBucketIfNotExists(containerKey)
+		if err != nil {
+			return nil, err
+		}
+
+		b, err := all.CreateBucketIfNotExists(indexKey)
+		if err != nil {
+			return nil, err
+		}
+
+		return b.CreateBucketIfNotExists(subKey)
+	}
+
+	all := tx.Bucket(containerKey)
+	if all == nil {
+		return nil, fmt.Errorf("No indexes have been created")
+	}
+
+	b := all.Bucket(indexKey)
+	if b == nil {
+		return nil, fmt.Errorf("Index %q does not exist", indexName)
+	}
+
+	s := b.Bucket(subKey)
+	if s == nil {
+		return nil, fmt.Errorf("Index is not well-formed")
+	}
+	return s, nil
+}
+
+func deleteBucketForIndex(tx *bolt.Tx, indexName string) error {
+	containerKey := []byte("INDEXES")
+	indexKey := []byte(indexName)
+
+	all, err := tx.CreateBucketIfNotExists(containerKey)
+	if err != nil {
+		return err
+	}
+
+	return all.DeleteBucket(indexKey)
 }
 
 func getEntry(b *bolt.Bucket, hash []byte) (*indexEntry, error) {
