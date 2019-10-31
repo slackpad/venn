@@ -19,24 +19,22 @@ type indexList struct {
 }
 
 func (c *indexList) Synopsis() string {
-	return "Lists files in an index"
+	return "Lists all the indexes in a database"
 }
 
 func (c *indexList) Help() string {
 	return `
-venn index list <dbPath> <indexName>
+venn index list <dbPath>
 	
-dbPath:    Path to the database file
-indexName: Name of index to use`
+dbPath:    Path to the database file`
 }
 
 func (c *indexList) Run(args []string) int {
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return cli.RunResultHelp
 	}
 	dbPath := args[0]
-	indexName := args[1]
-	if err := core.IndexList(c.logger, dbPath, indexName); err != nil {
+	if err := core.IndexList(c.logger, dbPath); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

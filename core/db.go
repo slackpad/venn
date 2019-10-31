@@ -14,28 +14,40 @@ type indexEntry struct {
 	ContentType string
 }
 
-func getBucketForIndex(tx *bolt.Tx, indexName, subName string) (*bolt.Bucket, error) {
+func getBucketForIndexes(tx *bolt.Tx) (*bolt.Bucket, error) {
 	containerKey := []byte("INDEXES")
-	indexKey := []byte(indexName)
-	subKey := []byte(subName)
 
 	if tx.Writable() {
 		all, err := tx.CreateBucketIfNotExists(containerKey)
 		if err != nil {
 			return nil, err
 		}
+		return all, nil
+	}
 
+	all := tx.Bucket(containerKey)
+	if all == nil {
+		return nil, fmt.Errorf("No indexes have been created")
+	}
+	return all, nil
+}
+
+func getBucketForIndex(tx *bolt.Tx, indexName, subName string) (*bolt.Bucket, error) {
+	indexKey := []byte(indexName)
+	subKey := []byte(subName)
+
+	all, err := getBucketForIndexes(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if tx.Writable() {
 		b, err := all.CreateBucketIfNotExists(indexKey)
 		if err != nil {
 			return nil, err
 		}
 
 		return b.CreateBucketIfNotExists(subKey)
-	}
-
-	all := tx.Bucket(containerKey)
-	if all == nil {
-		return nil, fmt.Errorf("No indexes have been created")
 	}
 
 	b := all.Bucket(indexKey)

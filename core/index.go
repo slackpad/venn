@@ -119,7 +119,7 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 		})
 }
 
-func IndexList(logger hclog.Logger, dbPath, indexName string) error {
+func IndexCat(logger hclog.Logger, dbPath, indexName string) error {
 	db, err := bolt.Open(dbPath, 0666, nil)
 	if err != nil {
 		return err
@@ -146,6 +146,27 @@ func IndexList(logger hclog.Logger, dbPath, indexName string) error {
 			sort.Strings(paths)
 
 			fmt.Printf("%x %10d %25s %v\n", k, entry.Size, entry.ContentType, strings.Join(paths, ","))
+		}
+		return nil
+	})
+}
+
+func IndexList(logger hclog.Logger, dbPath string) error {
+	db, err := bolt.Open(dbPath, 0666, nil)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	return db.View(func(tx *bolt.Tx) error {
+		b, err := getBucketForIndexes(tx)
+		if err != nil {
+			return err
+		}
+
+		c := b.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			fmt.Println(string(k))
 		}
 		return nil
 	})
