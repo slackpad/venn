@@ -24,9 +24,9 @@ func (c *indexList) Synopsis() string {
 
 func (c *indexList) Help() string {
 	return `
-venn index list <dbPath>
+venn index ls <dbPath>
 	
-dbPath:    Path to the database file`
+dbPath: Path to the database file`
 }
 
 func (c *indexList) Run(args []string) int {

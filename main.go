@@ -22,8 +22,8 @@ func main() {
 	c.Commands = map[string]cli.CommandFactory{
 		"index add-files":   venncmd.IndexAdd(logger),
 		"index cat":         venncmd.IndexCat(logger),
-		"index delete":      venncmd.IndexDelete(logger),
-		"index list":        venncmd.IndexList(logger),
+		"index ls":          venncmd.IndexList(logger),
+		"index rm":          venncmd.IndexDelete(logger),
 		"index materialize": venncmd.IndexMaterialize(logger),
 		"index stats":       venncmd.IndexStats(logger),
 		"set difference":    venncmd.SetDifference(logger),

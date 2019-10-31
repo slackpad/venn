@@ -24,7 +24,7 @@ func (c *indexDelete) Synopsis() string {
 
 func (c *indexDelete) Help() string {
 	return `
-venn index delete <dbPath> <indexName>
+venn index rm <dbPath> <indexName>
 	
 dbPath:    Path to the database file
 indexName: Name of index to delete`
