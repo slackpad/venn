@@ -5,5 +5,4 @@
     * Use the .json for all other files (if present) to set the metadata (at least the time stamp).
     * Make a new indexer "add-takeout".
     * Capture the time stamp in the index and use that when materializing.
-* Rename "add" to "add-files".
 * Rename "list" to "cat" and make a new "list" that shows all of the indexes like a directory.

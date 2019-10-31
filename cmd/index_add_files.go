@@ -28,7 +28,7 @@ Recursively scans all of the files in a folder tree and indexes them. The
 index will be created if it doesn't exist, or if it does exist then new
 files will be added to it.
 
-venn index add <dbPath> <indexName> <rootPath>
+venn index add-files <dbPath> <indexName> <rootPath>
 	
 dbPath:    Path to the database file (will create or append)
 indexName: Name of index to use
