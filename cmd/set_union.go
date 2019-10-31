@@ -6,25 +6,25 @@ import (
 	"github.com/slackpad/venn/core"
 )
 
-func SetDifference(logger hclog.Logger) cli.CommandFactory {
+func SetUnion(logger hclog.Logger) cli.CommandFactory {
 	return func() (cli.Command, error) {
-		return &setDifference{
+		return &setUnion{
 			logger: logger,
 		}, nil
 	}
 }
 
-type setDifference struct {
+type setUnion struct {
 	logger hclog.Logger
 }
 
-func (c *setDifference) Synopsis() string {
-	return "Makes a new index as A-B"
+func (c *setUnion) Synopsis() string {
+	return "Makes a new index as A+B"
 }
 
-func (c *setDifference) Help() string {
+func (c *setUnion) Help() string {
 	return `
-This creates a new index with all of the files in B removed from A. It
+This creates a new index with all of the files in A and B. It
 doesn't modify A or B.
 
 venn set subtract <dbPath> <indexName> <indexNameA> <indexNameA>
@@ -36,7 +36,7 @@ indexNameA: Second index
 `
 }
 
-func (c *setDifference) Run(args []string) int {
+func (c *setUnion) Run(args []string) int {
 	if len(args) != 4 {
 		return cli.RunResultHelp
 	}
@@ -44,7 +44,7 @@ func (c *setDifference) Run(args []string) int {
 	indexName := args[1]
 	a := args[2]
 	b := args[3]
-	if err := core.SetDifference(c.logger, dbPath, indexName, a, b); err != nil {
+	if err := core.SetUnion(c.logger, dbPath, indexName, a, b); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}
