@@ -28,6 +28,7 @@ func main() {
 		"index stats":       venncmd.IndexStats(logger),
 		"init":              venncmd.DoInit(logger),
 		"set difference":    venncmd.SetDifference(logger),
+		"set intersection":  venncmd.SetIntersection(logger),
 		"set union":         venncmd.SetUnion(logger),
 	}
 

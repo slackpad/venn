@@ -19,7 +19,7 @@ type setDifference struct {
 }
 
 func (c *setDifference) Synopsis() string {
-	return "Makes a new index as A-B"
+	return "Makes a new index as A - B"
 }
 
 func (c *setDifference) Help() string {
@@ -27,7 +27,7 @@ func (c *setDifference) Help() string {
 This creates a new index with all of the files in B removed from A. It
 doesn't modify A or B.
 
-venn set subtract <indexName> <indexNameA> <indexNameA>
+venn set difference <indexName> <indexNameA> <indexNameA>
 	
 indexName:  Name of index to create with the result
 indexNameA: First index

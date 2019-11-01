@@ -19,7 +19,7 @@ type setUnion struct {
 }
 
 func (c *setUnion) Synopsis() string {
-	return "Makes a new index as A+B"
+	return "Makes a new index as A ∪ B"
 }
 
 func (c *setUnion) Help() string {
@@ -27,7 +27,7 @@ func (c *setUnion) Help() string {
 This creates a new index with all of the files in A and B. It
 doesn't modify A or B.
 
-venn set subtract <indexName> <indexNameA> <indexNameA>
+venn set union <indexName> <indexNameA> <indexNameA>
 	
 indexName:  Name of index to create with the result
 indexNameA: First index

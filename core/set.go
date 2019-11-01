@@ -46,6 +46,45 @@ func SetDifference(logger hclog.Logger, indexName, indexNameA, indexNameB string
 	})
 }
 
+func SetIntersection(logger hclog.Logger, indexName, indexNameA, indexNameB string) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	return db.Update(func(tx *bolt.Tx) error {
+		if bucketExistsForIndex(tx, indexName) {
+			return fmt.Errorf("Target index %q already exists", indexName)
+		}
+
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
+		if err != nil {
+			return err
+		}
+
+		ab, err := getBucketForIndex(tx, indexNameA, "HASHES")
+		if err != nil {
+			return err
+		}
+
+		bb, err := getBucketForIndex(tx, indexNameB, "HASHES")
+		if err != nil {
+			return err
+		}
+
+		c := ab.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if bb.Get(k) != nil {
+				if err := b.Put(k, v); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
 func merge(first, second, target *bolt.Bucket) error {
 	c := first.Cursor()
 	for k, v := c.First(); k != nil; k, v = c.Next() {
