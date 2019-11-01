@@ -24,19 +24,17 @@ func (c *indexDelete) Synopsis() string {
 
 func (c *indexDelete) Help() string {
 	return `
-venn index rm <dbPath> <indexName>
+venn index rm <indexName>
 	
-dbPath:    Path to the database file
 indexName: Name of index to delete`
 }
 
 func (c *indexDelete) Run(args []string) int {
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return cli.RunResultHelp
 	}
-	dbPath := args[0]
-	indexName := args[1]
-	if err := core.IndexDelete(c.logger, dbPath, indexName); err != nil {
+	indexName := args[0]
+	if err := core.IndexDelete(c.logger, indexName); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

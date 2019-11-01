@@ -27,9 +27,8 @@ func (c *setUnion) Help() string {
 This creates a new index with all of the files in A and B. It
 doesn't modify A or B.
 
-venn set subtract <dbPath> <indexName> <indexNameA> <indexNameA>
+venn set subtract <indexName> <indexNameA> <indexNameA>
 	
-dbPath:     Path to the database file
 indexName:  Name of index to create with the result
 indexNameA: First index
 indexNameA: Second index
@@ -37,14 +36,13 @@ indexNameA: Second index
 }
 
 func (c *setUnion) Run(args []string) int {
-	if len(args) != 4 {
+	if len(args) != 3 {
 		return cli.RunResultHelp
 	}
-	dbPath := args[0]
-	indexName := args[1]
-	a := args[2]
-	b := args[3]
-	if err := core.SetUnion(c.logger, dbPath, indexName, a, b); err != nil {
+	indexName := args[0]
+	a := args[1]
+	b := args[2]
+	if err := core.SetUnion(c.logger, indexName, a, b); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

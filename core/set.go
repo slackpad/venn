@@ -7,8 +7,8 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func SetDifference(logger hclog.Logger, dbPath, indexName, indexNameA, indexNameB string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func SetDifference(logger hclog.Logger, indexName, indexNameA, indexNameB string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}
@@ -84,8 +84,8 @@ func merge(first, second, target *bolt.Bucket) error {
 	return nil
 }
 
-func SetUnion(logger hclog.Logger, dbPath, indexName, indexNameA, indexNameB string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func SetUnion(logger hclog.Logger, indexName, indexNameA, indexNameB string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}

@@ -15,8 +15,8 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func Materialize(logger hclog.Logger, dbPath, indexName, rootPath string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func Materialize(logger hclog.Logger, indexName, rootPath string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}

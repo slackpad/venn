@@ -11,17 +11,20 @@ Venn uses a single database file for all its work, and allows you to crawl trees
 Here's an example:
 
 ```
+# Initialize Venn
+venn init
+
 # Scan all of MyPhotos folder and add to "photos" index
-venn index add project.db photos MyPhotos
+venn index add-files photos MyPhotos
 
 # Scan all of WrongOnes folder and add to "bad_import" index
-venn index add project.db bad_import WrongOnes
+venn index add-files bad_import WrongOnes
 
 # Make a new index with all of the bad import taken out
-venn set difference project.db cleaned_up photos bad_import
+venn set difference cleaned_up photos bad_import
 
 # Materialize all of the cleaned up photos into MyNewPhotoLibrary folder
-venn index materialize project.db cleaned_up MyNewPhotoLibrary
+venn index materialize cleaned_up MyNewPhotoLibrary
 ```
 
 There are additional commands to perform set unions, and to manage indexes. Run `venn` with no arguments for help.

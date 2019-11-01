@@ -24,19 +24,17 @@ func (c *indexStats) Synopsis() string {
 
 func (c *indexStats) Help() string {
 	return `
-venn index stats <dbPath> <indexName>
+venn index stats <indexName>
 	
-dbPath:    Path to the database file
 indexName: Name of index to use`
 }
 
 func (c *indexStats) Run(args []string) int {
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return cli.RunResultHelp
 	}
-	dbPath := args[0]
-	indexName := args[1]
-	if err := core.IndexStats(c.logger, dbPath, indexName); err != nil {
+	indexName := args[0]
+	if err := core.IndexStats(c.logger, indexName); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

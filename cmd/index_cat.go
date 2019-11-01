@@ -24,19 +24,17 @@ func (c *indexCat) Synopsis() string {
 
 func (c *indexCat) Help() string {
 	return `
-venn index cat <dbPath> <indexName>
+venn index cat <indexName>
 	
-dbPath:    Path to the database file
 indexName: Name of index to use`
 }
 
 func (c *indexCat) Run(args []string) int {
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return cli.RunResultHelp
 	}
-	dbPath := args[0]
-	indexName := args[1]
-	if err := core.IndexCat(c.logger, dbPath, indexName); err != nil {
+	indexName := args[0]
+	if err := core.IndexCat(c.logger, indexName); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

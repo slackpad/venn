@@ -28,21 +28,19 @@ Recursively scans all of the files in a folder tree and indexes them. The
 index will be created if it doesn't exist, or if it does exist then new
 files will be added to it.
 
-venn index add-files <dbPath> <indexName> <rootPath>
+venn index add-files <indexName> <rootPath>
 	
-dbPath:    Path to the database file (will create or append)
 indexName: Name of index to use
 rootPath:  Path of the root folder to scan`
 }
 
 func (c *indexAdd) Run(args []string) int {
-	if len(args) != 3 {
+	if len(args) != 2 {
 		return cli.RunResultHelp
 	}
-	dbPath := args[0]
-	indexName := args[1]
-	rootPath := args[2]
-	if err := core.IndexAdd(c.logger, dbPath, indexName, rootPath); err != nil {
+	indexName := args[0]
+	rootPath := args[1]
+	if err := core.IndexAdd(c.logger, indexName, rootPath); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

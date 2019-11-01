@@ -26,21 +26,19 @@ func (c *indexMaterialize) Help() string {
 	return `
 Copies without duplicates all indexed files into the target path.
 
-venn materialize <dbPath> <indexName> <rootPath>
+venn materialize <indexName> <rootPath>
 	
-dbPath:    Path to the database file
 indexName: Name of index to use
 rootPath:  Path of the root folder to target`
 }
 
 func (c *indexMaterialize) Run(args []string) int {
-	if len(args) != 3 {
+	if len(args) != 2 {
 		return cli.RunResultHelp
 	}
-	dbPath := args[0]
-	indexName := args[1]
-	rootPath := args[2]
-	if err := core.Materialize(c.logger, dbPath, indexName, rootPath); err != nil {
+	indexName := args[0]
+	rootPath := args[1]
+	if err := core.Materialize(c.logger, indexName, rootPath); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

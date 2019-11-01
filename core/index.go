@@ -20,8 +20,8 @@ func bucketForIndex(indexName string) []byte {
 	return []byte(fmt.Sprintf("index:%s", indexName))
 }
 
-func IndexAdd(logger hclog.Logger, dbPath, indexName, rootPath string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func IndexAdd(logger hclog.Logger, indexName, rootPath string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}
@@ -119,8 +119,8 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 		})
 }
 
-func IndexCat(logger hclog.Logger, dbPath, indexName string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func IndexCat(logger hclog.Logger, indexName string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}
@@ -151,8 +151,8 @@ func IndexCat(logger hclog.Logger, dbPath, indexName string) error {
 	})
 }
 
-func IndexList(logger hclog.Logger, dbPath string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func IndexList(logger hclog.Logger) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}
@@ -172,8 +172,8 @@ func IndexList(logger hclog.Logger, dbPath string) error {
 	})
 }
 
-func IndexStats(logger hclog.Logger, dbPath, indexName string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func IndexStats(logger hclog.Logger, indexName string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}
@@ -223,8 +223,8 @@ func IndexStats(logger hclog.Logger, dbPath, indexName string) error {
 	})
 }
 
-func IndexDelete(logger hclog.Logger, dbPath, indexName string) error {
-	db, err := bolt.Open(dbPath, 0666, nil)
+func IndexDelete(logger hclog.Logger, indexName string) error {
+	db, err := getDB()
 	if err != nil {
 		return err
 	}

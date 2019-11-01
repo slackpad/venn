@@ -4,14 +4,39 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"os"
 
+	"github.com/hashicorp/go-hclog"
 	bolt "go.etcd.io/bbolt"
 )
+
+const dbPath = "venn.db"
 
 type indexEntry struct {
 	Paths       map[string]struct{}
 	Size        int64
 	ContentType string
+}
+
+func CreateDB(logger hclog.Logger) error {
+	db, err := bolt.Open(dbPath, 0666, nil)
+	if err != nil {
+		return err
+	}
+	return db.Close()
+}
+
+func getDB() (*bolt.DB, error) {
+	_, err := os.Stat(dbPath)
+	if os.IsNotExist(err) {
+		return nil, fmt.Errorf("Venn has not been initialized")
+	}
+
+	db, err := bolt.Open(dbPath, 0666, nil)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func getBucketForIndexes(tx *bolt.Tx) (*bolt.Bucket, error) {

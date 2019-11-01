@@ -6,32 +6,32 @@ import (
 	"github.com/slackpad/venn/core"
 )
 
-func IndexList(logger hclog.Logger) cli.CommandFactory {
+func DoInit(logger hclog.Logger) cli.CommandFactory {
 	return func() (cli.Command, error) {
-		return &indexList{
+		return &doInit{
 			logger: logger,
 		}, nil
 	}
 }
 
-type indexList struct {
+type doInit struct {
 	logger hclog.Logger
 }
 
-func (c *indexList) Synopsis() string {
-	return "Lists all the indexes"
+func (c *doInit) Synopsis() string {
+	return "Initialize venn in the current directory"
 }
 
-func (c *indexList) Help() string {
+func (c *doInit) Help() string {
 	return `
-venn index ls`
+venn init`
 }
 
-func (c *indexList) Run(args []string) int {
+func (c *doInit) Run(args []string) int {
 	if len(args) != 0 {
 		return cli.RunResultHelp
 	}
-	if err := core.IndexList(c.logger); err != nil {
+	if err := core.CreateDB(c.logger); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

@@ -26,6 +26,7 @@ func main() {
 		"index rm":          venncmd.IndexDelete(logger),
 		"index materialize": venncmd.IndexMaterialize(logger),
 		"index stats":       venncmd.IndexStats(logger),
+		"init":              venncmd.DoInit(logger),
 		"set difference":    venncmd.SetDifference(logger),
 		"set union":         venncmd.SetUnion(logger),
 	}
