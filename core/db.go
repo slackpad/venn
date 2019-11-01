@@ -87,6 +87,15 @@ func getBucketForIndex(tx *bolt.Tx, indexName, subName string) (*bolt.Bucket, er
 	return s, nil
 }
 
+func bucketExistsForIndex(tx *bolt.Tx, indexName string) bool {
+	all, err := getBucketForIndexes(tx)
+	if err != nil {
+		return false
+	}
+
+	return all.Bucket([]byte(indexName)) != nil
+}
+
 func deleteBucketForIndex(tx *bolt.Tx, indexName string) error {
 	containerKey := []byte("INDEXES")
 	indexKey := []byte(indexName)

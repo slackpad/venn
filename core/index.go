@@ -16,10 +16,6 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func bucketForIndex(indexName string) []byte {
-	return []byte(fmt.Sprintf("index:%s", indexName))
-}
-
 func IndexAdd(logger hclog.Logger, indexName, rootPath string) error {
 	db, err := getDB()
 	if err != nil {

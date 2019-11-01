@@ -23,9 +23,9 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 	defer db.Close()
 
 	return db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(bucketForIndex(indexName))
-		if b == nil {
-			return fmt.Errorf("Index %q does not exist", indexName)
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
+		if err != nil {
+			return err
 		}
 
 		bar := pb.StartNew(b.Stats().KeyN)

@@ -15,24 +15,23 @@ func SetDifference(logger hclog.Logger, indexName, indexNameA, indexNameB string
 	defer db.Close()
 
 	return db.Update(func(tx *bolt.Tx) error {
-		out := bucketForIndex(indexName)
-		b := tx.Bucket(out)
-		if b != nil {
-			return fmt.Errorf("Index %q already exists", indexName)
+		if bucketExistsForIndex(tx, indexName) {
+			return fmt.Errorf("Target index %q already exists", indexName)
 		}
-		b, err = tx.CreateBucket(out)
+
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
 		if err != nil {
 			return err
 		}
 
-		ab := tx.Bucket(bucketForIndex(indexNameA))
-		if ab == nil {
-			return fmt.Errorf("Index %q does not exist", indexNameA)
+		ab, err := getBucketForIndex(tx, indexNameA, "HASHES")
+		if err != nil {
+			return err
 		}
 
-		bb := tx.Bucket(bucketForIndex(indexNameB))
-		if bb == nil {
-			return fmt.Errorf("Index %q does not exist", indexNameB)
+		bb, err := getBucketForIndex(tx, indexNameB, "HASHES")
+		if err != nil {
+			return err
 		}
 
 		c := ab.Cursor()
@@ -92,24 +91,23 @@ func SetUnion(logger hclog.Logger, indexName, indexNameA, indexNameB string) err
 	defer db.Close()
 
 	return db.Update(func(tx *bolt.Tx) error {
-		out := bucketForIndex(indexName)
-		b := tx.Bucket(out)
-		if b != nil {
-			return fmt.Errorf("Index %q already exists", indexName)
+		if bucketExistsForIndex(tx, indexName) {
+			return fmt.Errorf("Target index %q already exists", indexName)
 		}
-		b, err = tx.CreateBucket(out)
+
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
 		if err != nil {
 			return err
 		}
 
-		ab := tx.Bucket(bucketForIndex(indexNameA))
-		if ab == nil {
-			return fmt.Errorf("Index %q does not exist", indexNameA)
+		ab, err := getBucketForIndex(tx, indexNameA, "HASHES")
+		if err != nil {
+			return err
 		}
 
-		bb := tx.Bucket(bucketForIndex(indexNameB))
-		if bb == nil {
-			return fmt.Errorf("Index %q does not exist", indexNameB)
+		bb, err := getBucketForIndex(tx, indexNameB, "HASHES")
+		if err != nil {
+			return err
 		}
 
 		return merge(ab, bb, b)
