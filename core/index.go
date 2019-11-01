@@ -102,6 +102,7 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 				entry = &indexEntry{
 					Paths:       make(map[string]struct{}),
 					Size:        info.Size(),
+					Timestamp:   info.ModTime(),
 					ContentType: contentType,
 				}
 			}
@@ -128,6 +129,7 @@ func IndexCat(logger hclog.Logger, indexName string) error {
 			return err
 		}
 
+		var rows []string
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			entry, err := decodeEntry(v)
@@ -141,8 +143,13 @@ func IndexCat(logger hclog.Logger, indexName string) error {
 			}
 			sort.Strings(paths)
 
-			fmt.Printf("%x %10d %25s %v\n", k, entry.Size, entry.ContentType, strings.Join(paths, ","))
+			rows = append(rows,
+				fmt.Sprintf("%x|%d|%s|%s|%v\n",
+					k, entry.Size, entry.Timestamp, entry.ContentType, strings.Join(paths, ",")))
 		}
+
+		rows = append([]string{"SHA-256|Bytes|Timestamp|Content Type|Path(s)"}, rows...)
+		fmt.Println(columnize.SimpleFormat(rows))
 		return nil
 	})
 }

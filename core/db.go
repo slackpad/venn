@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
 	bolt "go.etcd.io/bbolt"
@@ -15,6 +16,7 @@ const dbPath = "venn.db"
 type indexEntry struct {
 	Paths       map[string]struct{}
 	Size        int64
+	Timestamp   time.Time
 	ContentType string
 }
 

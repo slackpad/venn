@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/hashicorp/go-hclog"
@@ -68,7 +69,7 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 				continue FILES
 			}
 
-			if err := copyFile(k, src, dst); err != nil {
+			if err := copyFile(k, src, dst, entry.Timestamp); err != nil {
 				return fmt.Errorf("Failed to copy %q: %v", src, err)
 			}
 
@@ -80,7 +81,7 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 				for i, src := range paths {
 					name = fmt.Sprintf("%d%s", i, ext)
 					dst = filepath.Join(dir, name)
-					if err := copyFile(k, src, dst); err != nil {
+					if err := copyFile(k, src, dst, entry.Timestamp); err != nil {
 						return fmt.Errorf("Failed to copy %q: %v", src, err)
 					}
 				}
@@ -93,7 +94,7 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 	})
 }
 
-func copyFile(hash []byte, src, dst string) error {
+func copyFile(hash []byte, src, dst string, timestamp time.Time) error {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -126,12 +127,8 @@ func copyFile(hash []byte, src, dst string) error {
 		return err
 	}
 
-	// Keep the time from the source file.
-	info, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-	if err := os.Chtimes(dst, info.ModTime(), info.ModTime()); err != nil {
+	// Keep the time from the index.
+	if err := os.Chtimes(dst, timestamp, timestamp); err != nil {
 		return err
 	}
 
