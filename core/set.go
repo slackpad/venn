@@ -73,53 +73,8 @@ func SetIntersection(logger hclog.Logger, indexName, indexNameA, indexNameB stri
 			return err
 		}
 
-		c := ab.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if bb.Get(k) != nil {
-				if err := b.Put(k, v); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
+		return intersect(ab, bb, b)
 	})
-}
-
-func merge(first, second, target *bolt.Bucket) error {
-	c := first.Cursor()
-	for k, v := c.First(); k != nil; k, v = c.Next() {
-		entry, err := decodeEntry(v)
-		if err != nil {
-			return err
-		}
-
-		other, err := getEntry(second, k)
-		if err != nil {
-			return err
-		}
-		if other != nil {
-			for p := range other.Paths {
-				entry.Paths[p] = struct{}{}
-			}
-		}
-
-		putEntry(target, k, entry)
-	}
-
-	c = second.Cursor()
-	for k, v := c.First(); k != nil; k, v = c.Next() {
-		other := first.Get(k)
-		if other != nil {
-			// We merged it already above.
-			continue
-		}
-
-		if err := target.Put(k, v); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func SetUnion(logger hclog.Logger, indexName, indexNameA, indexNameB string) error {
@@ -151,4 +106,67 @@ func SetUnion(logger hclog.Logger, indexName, indexNameA, indexNameB string) err
 
 		return merge(ab, bb, b)
 	})
+}
+
+func merge(first, second, target *bolt.Bucket) error {
+	c := first.Cursor()
+	for k, v := c.First(); k != nil; k, v = c.Next() {
+		entry, err := decodeEntry(v)
+		if err != nil {
+			return err
+		}
+
+		other, err := getEntry(second, k)
+		if err != nil {
+			return err
+		}
+		if other != nil {
+			for p := range other.Paths {
+				entry.Paths[p] = struct{}{}
+			}
+		}
+
+		if err := putEntry(target, k, entry); err != nil {
+			return err
+		}
+	}
+
+	c = second.Cursor()
+	for k, v := c.First(); k != nil; k, v = c.Next() {
+		other := first.Get(k)
+		if other != nil {
+			// We merged it already above.
+			continue
+		}
+
+		if err := target.Put(k, v); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func intersect(first, second, target *bolt.Bucket) error {
+	c := first.Cursor()
+	for k, v := c.First(); k != nil; k, v = c.Next() {
+		entry, err := decodeEntry(v)
+		if err != nil {
+			return err
+		}
+
+		other, err := getEntry(second, k)
+		if err != nil {
+			return err
+		}
+		if other != nil {
+			for p := range other.Paths {
+				entry.Paths[p] = struct{}{}
+			}
+			if err := putEntry(target, k, entry); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
