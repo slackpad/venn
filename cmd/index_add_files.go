@@ -6,23 +6,23 @@ import (
 	"github.com/slackpad/venn/core"
 )
 
-func IndexAdd(logger hclog.Logger) cli.CommandFactory {
+func IndexAddFiles(logger hclog.Logger) cli.CommandFactory {
 	return func() (cli.Command, error) {
-		return &indexAdd{
+		return &indexAddFiles{
 			logger: logger,
 		}, nil
 	}
 }
 
-type indexAdd struct {
+type indexAddFiles struct {
 	logger hclog.Logger
 }
 
-func (c *indexAdd) Synopsis() string {
+func (c *indexAddFiles) Synopsis() string {
 	return "Adds files to an index"
 }
 
-func (c *indexAdd) Help() string {
+func (c *indexAddFiles) Help() string {
 	return `
 Recursively scans all of the files in a folder tree and indexes them. The
 index will be created if it doesn't exist, or if it does exist then new
@@ -34,7 +34,7 @@ indexName: Name of index to use
 rootPath:  Path of the root folder to scan`
 }
 
-func (c *indexAdd) Run(args []string) int {
+func (c *indexAddFiles) Run(args []string) int {
 	if len(args) != 2 {
 		return cli.RunResultHelp
 	}

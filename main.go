@@ -20,7 +20,7 @@ func main() {
 	c := cli.NewCLI(appName, appVersion)
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
-		"index add-files":   venncmd.IndexAdd(logger),
+		"index add-files":   venncmd.IndexAddFiles(logger),
 		"index cat":         venncmd.IndexCat(logger),
 		"index ls":          venncmd.IndexList(logger),
 		"index rm":          venncmd.IndexDelete(logger),
