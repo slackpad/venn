@@ -23,17 +23,36 @@ func IndexAdd(logger hclog.Logger, indexName, rootPath string) error {
 	}
 	defer db.Close()
 
+	count, err := countFiles(logger, rootPath)
+	if err != nil {
+		return err
+	}
+	bar := pb.StartNew(count)
+	defer bar.Finish()
+
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := getBucketForIndex(tx, indexName, "HASHES")
 		if err != nil {
 			return err
 		}
 
-		return indexPath(logger, b, rootPath)
+		return filepath.Walk(rootPath,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				if info.IsDir() {
+					return nil
+				}
+
+				bar.Increment()
+				return indexFile(logger, b, path, info)
+			})
 	})
 }
 
-func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
+func countFiles(logger hclog.Logger, rootPath string) (int, error) {
 	count := 0
 	err := filepath.Walk(rootPath,
 		func(path string, info os.FileInfo, err error) error {
@@ -48,72 +67,58 @@ func indexPath(logger hclog.Logger, b *bolt.Bucket, rootPath string) error {
 			count++
 			return nil
 		})
+	return count, err
+}
+
+func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("Failed to open %q: %v", path, err)
+	}
+	defer f.Close()
+
+	// Calculate the hash of the file.
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("Failed to hash %q: %v", path, err)
+	}
+	hash := h.Sum(nil)
+
+	entry, err := getEntry(b, hash)
 	if err != nil {
 		return err
 	}
+	if entry == nil {
+		// Grab the first part of the file and try to determine its mime type.
+		if _, err := f.Seek(0, 0); err != nil {
+			return fmt.Errorf("Failed to seek %q: %v", path, err)
+		}
 
-	bar := pb.StartNew(count)
-	defer bar.Finish()
-	return filepath.Walk(rootPath,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
+		// Only try if there's enough in there to classify, otherwise we will
+		// get EOF errors.
+		contentType := "application/octet-stream"
+		if info.Size() >= 512 {
+			head := make([]byte, 512)
+			if _, err := f.Read(head); err != nil {
+				return fmt.Errorf("Failed to scan %q: %v", path, err)
 			}
+			contentType = http.DetectContentType(head)
+			contentType = strings.Split(contentType, ";")[0]
+		}
 
-			if info.IsDir() {
-				return nil
-			}
+		entry = &indexEntry{
+			Paths:       make(map[string]struct{}),
+			Size:        info.Size(),
+			Timestamp:   info.ModTime(),
+			ContentType: contentType,
+		}
+	}
+	entry.Paths[path] = struct{}{}
+	if err := putEntry(b, hash, entry); err != nil {
+		return err
+	}
 
-			f, err := os.Open(path)
-			if err != nil {
-				return fmt.Errorf("Failed to open %q: %v", path, err)
-			}
-			defer f.Close()
-
-			// Calculate the hash of the file.
-			h := sha256.New()
-			if _, err := io.Copy(h, f); err != nil {
-				return fmt.Errorf("Failed to hash %q: %v", path, err)
-			}
-			hash := h.Sum(nil)
-
-			entry, err := getEntry(b, hash)
-			if err != nil {
-				return err
-			}
-			if entry == nil {
-				// Grab the first part of the file and try to determine its mime type.
-				if _, err := f.Seek(0, 0); err != nil {
-					return fmt.Errorf("Failed to seek %q: %v", path, err)
-				}
-
-				// Only try if there's enough in there to classify, otherwise we will
-				// get EOF errors.
-				contentType := "application/octet-stream"
-				if info.Size() >= 512 {
-					head := make([]byte, 512)
-					if _, err := f.Read(head); err != nil {
-						return fmt.Errorf("Failed to scan %q: %v", path, err)
-					}
-					contentType = http.DetectContentType(head)
-					contentType = strings.Split(contentType, ";")[0]
-				}
-
-				entry = &indexEntry{
-					Paths:       make(map[string]struct{}),
-					Size:        info.Size(),
-					Timestamp:   info.ModTime(),
-					ContentType: contentType,
-				}
-			}
-			entry.Paths[path] = struct{}{}
-			if err := putEntry(b, hash, entry); err != nil {
-				return err
-			}
-
-			bar.Increment()
-			return nil
-		})
+	return nil
 }
 
 func IndexCat(logger hclog.Logger, indexName string) error {
