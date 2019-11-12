@@ -47,8 +47,12 @@ func IndexAdd(logger hclog.Logger, indexName, rootPath string) error {
 					return nil
 				}
 
+				if err := indexFile(logger, b, path, info); err != nil {
+					return fmt.Errorf("Failed to index %q: %v", path, err)
+				}
+
 				bar.Increment()
-				return indexFile(logger, b, path, info)
+				return nil
 			})
 	})
 }
@@ -74,14 +78,14 @@ func countFiles(logger hclog.Logger, rootPath string) (int, error) {
 func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) error {
 	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("Failed to open %q: %v", path, err)
+		return err
 	}
 	defer f.Close()
 
 	// Calculate the hash of the file.
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return fmt.Errorf("Failed to hash %q: %v", path, err)
+		return err
 	}
 	hash := h.Sum(nil)
 
@@ -92,7 +96,7 @@ func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInf
 	if entry == nil {
 		// Grab the first part of the file and try to determine its mime type.
 		if _, err := f.Seek(0, 0); err != nil {
-			return fmt.Errorf("Failed to seek %q: %v", path, err)
+			return err
 		}
 
 		// Only try if there's enough in there to classify, otherwise we will
@@ -101,7 +105,7 @@ func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInf
 		if info.Size() >= 512 {
 			head := make([]byte, 512)
 			if _, err := f.Read(head); err != nil {
-				return fmt.Errorf("Failed to scan %q: %v", path, err)
+				return err
 			}
 			contentType = http.DetectContentType(head)
 			contentType = strings.Split(contentType, ";")[0]
