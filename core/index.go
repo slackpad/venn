@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/hashicorp/go-hclog"
@@ -150,7 +151,8 @@ func IndexCat(logger hclog.Logger, indexName string) error {
 
 			rows = append(rows,
 				fmt.Sprintf("%x|%d|%s|%s|%v\n",
-					k, entry.Size, entry.Timestamp, entry.ContentType, strings.Join(paths, ",")))
+					k, entry.Size, entry.Timestamp.Format(time.RFC3339),
+					entry.ContentType, strings.Join(paths, ",")))
 		}
 
 		rows = append([]string{"SHA-256|Bytes|Timestamp|Content Type|Path(s)"}, rows...)
