@@ -75,6 +75,26 @@ func countFiles(logger hclog.Logger, rootPath string) (int, error) {
 	return count, err
 }
 
+func grokFile(logger hclog.Logger, f *os.File, info os.FileInfo) (string, error) {
+	// Only try if there's enough in there to classify, otherwise we will
+	// get EOF errors.
+	contentType := "application/octet-stream"
+	if info.Size() < 512 {
+		return contentType, nil
+	}
+
+	if _, err := f.Seek(0, 0); err != nil {
+		return "", err
+	}
+	head := make([]byte, 512)
+	if _, err := f.Read(head); err != nil {
+		return "", err
+	}
+	contentType = http.DetectContentType(head)
+	contentType = strings.Split(contentType, ";")[0]
+	return contentType, nil
+}
+
 func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) error {
 	f, err := os.Open(path)
 	if err != nil {
@@ -94,21 +114,9 @@ func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInf
 		return err
 	}
 	if entry == nil {
-		// Grab the first part of the file and try to determine its mime type.
-		if _, err := f.Seek(0, 0); err != nil {
+		contentType, err := grokFile(logger, f, info)
+		if err != nil {
 			return err
-		}
-
-		// Only try if there's enough in there to classify, otherwise we will
-		// get EOF errors.
-		contentType := "application/octet-stream"
-		if info.Size() >= 512 {
-			head := make([]byte, 512)
-			if _, err := f.Read(head); err != nil {
-				return err
-			}
-			contentType = http.DetectContentType(head)
-			contentType = strings.Split(contentType, ";")[0]
 		}
 
 		entry = &indexEntry{
