@@ -2,7 +2,6 @@ package core
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -168,23 +167,12 @@ func indexGooglePhotosTakeout(logger hclog.Logger, b *bolt.Bucket, path string, 
 
 	metadata := path + ext
 	if _, err := os.Stat(metadata); err == nil {
-		f, err := os.Open(metadata)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		var meta takeoutMetadata
-		dec := json.NewDecoder(f)
-		if err := dec.Decode(&meta); err != nil {
-			return err
-		}
-		taken, err := meta.Timestamp()
+		ts, err := getTakeoutTimestamp(metadata)
 		if err != nil {
 			return err
 		}
 
-		entry.Timestamp = taken
+		entry.Timestamp = ts
 		entry.Attachments[ext] = metadata
 	}
 

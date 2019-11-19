@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+	"os"
 	"strconv"
 	"time"
 )
@@ -12,11 +14,23 @@ type takeoutMetadata struct {
 	}
 }
 
-func (m *takeoutMetadata) Timestamp() (time.Time, error) {
-	i, err := strconv.ParseInt(m.PhotoTakenTime.Timestamp, 10, 64)
+func getTakeoutTimestamp(path string) (time.Time, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		return time.Unix(0, 0), err
+		return time.Time{}, err
+	}
+	defer f.Close()
+
+	var meta takeoutMetadata
+	dec := json.NewDecoder(f)
+	if err := dec.Decode(&meta); err != nil {
+		return time.Time{}, err
 	}
 
-	return time.Unix(i, 0).UTC(), nil
+	ts, err := strconv.ParseInt(meta.PhotoTakenTime.Timestamp, 10, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Unix(ts, 0).UTC(), nil
 }
