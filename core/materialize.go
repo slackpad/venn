@@ -72,6 +72,13 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 			if err := copyFileWithHash(k, src, dst, entry.Timestamp); err != nil {
 				return fmt.Errorf("Failed to copy %q: %v", src, err)
 			}
+			for ext, src := range entry.Attachments {
+				name := fmt.Sprintf("%x%s", k, ext)
+				dst := filepath.Join(dir, name)
+				if err := copyFile(src, dst); err != nil {
+					return fmt.Errorf("Failed to copy %q: %v", src, err)
+				}
+			}
 
 			if len(paths) > 1 {
 				dir = filepath.Join(rootPath, "_dups", f0, f1, fmt.Sprintf("%x", k))
@@ -84,14 +91,6 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 					if err := copyFileWithHash(k, src, dst, entry.Timestamp); err != nil {
 						return fmt.Errorf("Failed to copy %q: %v", src, err)
 					}
-				}
-			}
-
-			for ext, src := range entry.Attachments {
-				name := fmt.Sprintf("%x%s", k, ext)
-				dst := filepath.Join(dir, name)
-				if err := copyFile(src, dst); err != nil {
-					return fmt.Errorf("Failed to copy %q: %v", src, err)
 				}
 			}
 
