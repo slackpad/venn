@@ -14,6 +14,11 @@ Here's an example:
 # Initialize Venn
 venn init
 
+# Scan a Google Photos Takeout and add to "google" index; this will preserve
+# the "photo taken" timestamps as well as the metadata JSON files in the
+# materialized view.
+venn index add-google-photos-takeout google MyBackup
+
 # Scan all of MyPhotos folder and add to "photos" index
 venn index add-files photos MyPhotos
 
