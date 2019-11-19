@@ -69,7 +69,7 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 				continue FILES
 			}
 
-			if err := copyFile(k, src, dst, entry.Timestamp); err != nil {
+			if err := copyFileWithHash(k, src, dst, entry.Timestamp); err != nil {
 				return fmt.Errorf("Failed to copy %q: %v", src, err)
 			}
 
@@ -81,9 +81,17 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 				for i, src := range paths {
 					name = fmt.Sprintf("%d%s", i, ext)
 					dst = filepath.Join(dir, name)
-					if err := copyFile(k, src, dst, entry.Timestamp); err != nil {
+					if err := copyFileWithHash(k, src, dst, entry.Timestamp); err != nil {
 						return fmt.Errorf("Failed to copy %q: %v", src, err)
 					}
+				}
+			}
+
+			for ext, src := range entry.Attachments {
+				name := fmt.Sprintf("%x%s", k, ext)
+				dst := filepath.Join(dir, name)
+				if err := copyFile(src, dst); err != nil {
+					return fmt.Errorf("Failed to copy %q: %v", src, err)
 				}
 			}
 
@@ -94,7 +102,32 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 	})
 }
 
-func copyFile(hash []byte, src, dst string, timestamp time.Time) error {
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	tmp, err := ioutil.TempFile(filepath.Dir(dst), "")
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(tmp, in)
+	if err != nil {
+		tmp.Close()
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+
+	return os.Rename(tmp.Name(), dst)
+}
+
+func copyFileWithHash(hash []byte, src, dst string, timestamp time.Time) error {
 	in, err := os.Open(src)
 	if err != nil {
 		return err

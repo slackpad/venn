@@ -40,7 +40,7 @@ func (c *indexAddFiles) Run(args []string) int {
 	}
 	indexName := args[0]
 	rootPath := args[1]
-	if err := core.IndexAdd(c.logger, indexName, rootPath); err != nil {
+	if err := core.IndexAddFiles(c.logger, indexName, rootPath); err != nil {
 		c.logger.Error(err.Error())
 		return 1
 	}

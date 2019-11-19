@@ -20,16 +20,17 @@ func main() {
 	c := cli.NewCLI(appName, appVersion)
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
-		"index add-files":   venncmd.IndexAddFiles(logger),
-		"index cat":         venncmd.IndexCat(logger),
-		"index ls":          venncmd.IndexList(logger),
-		"index rm":          venncmd.IndexDelete(logger),
-		"index materialize": venncmd.IndexMaterialize(logger),
-		"index stats":       venncmd.IndexStats(logger),
-		"init":              venncmd.DoInit(logger),
-		"set difference":    venncmd.SetDifference(logger),
-		"set intersection":  venncmd.SetIntersection(logger),
-		"set union":         venncmd.SetUnion(logger),
+		"index add-files":                 venncmd.IndexAddFiles(logger),
+		"index add-google-photos-takeout": venncmd.IndexAddGooglePhotosTakeout(logger),
+		"index cat":                       venncmd.IndexCat(logger),
+		"index ls":                        venncmd.IndexList(logger),
+		"index rm":                        venncmd.IndexDelete(logger),
+		"index materialize":               venncmd.IndexMaterialize(logger),
+		"index stats":                     venncmd.IndexStats(logger),
+		"init":                            venncmd.DoInit(logger),
+		"set difference":                  venncmd.SetDifference(logger),
+		"set intersection":                venncmd.SetIntersection(logger),
+		"set union":                       venncmd.SetUnion(logger),
 	}
 
 	exitStatus, err := c.Run()

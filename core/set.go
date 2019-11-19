@@ -121,9 +121,7 @@ func merge(first, second, target *bolt.Bucket) error {
 			return err
 		}
 		if other != nil {
-			for p := range other.Paths {
-				entry.Paths[p] = struct{}{}
-			}
+			entry.merge(other)
 		}
 
 		if err := putEntry(target, k, entry); err != nil {
@@ -160,9 +158,7 @@ func intersect(first, second, target *bolt.Bucket) error {
 			return err
 		}
 		if other != nil {
-			for p := range other.Paths {
-				entry.Paths[p] = struct{}{}
-			}
+			entry.merge(other)
 			if err := putEntry(target, k, entry); err != nil {
 				return err
 			}

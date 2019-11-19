@@ -2,6 +2,7 @@ package core
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +18,17 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func IndexAdd(logger hclog.Logger, indexName, rootPath string) error {
+func IndexAddFiles(logger hclog.Logger, indexName, rootPath string) error {
+	return indexAdd(logger, indexFile, indexName, rootPath)
+}
+
+func IndexAddGooglePhotosTakeout(logger hclog.Logger, indexName, rootPath string) error {
+	return indexAdd(logger, indexGooglePhotosTakeout, indexName, rootPath)
+}
+
+type indexFn func(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) error
+
+func indexAdd(logger hclog.Logger, fn indexFn, indexName, rootPath string) error {
 	db, err := getDB()
 	if err != nil {
 		return err
@@ -47,7 +58,7 @@ func IndexAdd(logger hclog.Logger, indexName, rootPath string) error {
 					return nil
 				}
 
-				if err := indexFile(logger, b, path, info); err != nil {
+				if err := fn(logger, b, path, info); err != nil {
 					return fmt.Errorf("Failed to index %q: %v", path, err)
 				}
 
@@ -75,6 +86,41 @@ func countFiles(logger hclog.Logger, rootPath string) (int, error) {
 	return count, err
 }
 
+func makeFileEntry(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) ([]byte, *indexEntry, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return nil, nil, err
+	}
+	hash := h.Sum(nil)
+
+	entry, err := getEntry(b, hash)
+	if err != nil {
+		return nil, nil, err
+	}
+	if entry == nil {
+		contentType, err := grokFile(logger, f, info)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		entry = &indexEntry{
+			Paths:       make(map[string]struct{}),
+			Attachments: make(map[string]string),
+			Size:        info.Size(),
+			Timestamp:   info.ModTime(),
+			ContentType: contentType,
+		}
+	}
+	entry.Paths[path] = struct{}{}
+	return hash, entry, nil
+}
+
 func grokFile(logger hclog.Logger, f *os.File, info os.FileInfo) (string, error) {
 	// Only try if there's enough in there to classify, otherwise we will
 	// get EOF errors.
@@ -96,42 +142,53 @@ func grokFile(logger hclog.Logger, f *os.File, info os.FileInfo) (string, error)
 }
 
 func indexFile(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) error {
-	f, err := os.Open(path)
+	hash, entry, err := makeFileEntry(logger, b, path, info)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	return putEntry(b, hash, entry)
+}
 
-	// Calculate the hash of the file.
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return err
+func indexGooglePhotosTakeout(logger hclog.Logger, b *bolt.Bucket, path string, info os.FileInfo) error {
+	// Skip any file with a .json extension that has a companion file with the same path
+	// but without that extension; that's a metatdata file that we will process with the
+	// main file.
+	const ext = ".json"
+	if strings.HasSuffix(path, ext) {
+		base := strings.TrimSuffix(path, ext)
+		if _, err := os.Stat(base); err == nil {
+			return nil
+		}
 	}
-	hash := h.Sum(nil)
 
-	entry, err := getEntry(b, hash)
+	hash, entry, err := makeFileEntry(logger, b, path, info)
 	if err != nil {
 		return err
 	}
-	if entry == nil {
-		contentType, err := grokFile(logger, f, info)
+
+	metadata := path + ext
+	if _, err := os.Stat(metadata); err == nil {
+		f, err := os.Open(metadata)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		var meta takeoutMetadata
+		dec := json.NewDecoder(f)
+		if err := dec.Decode(&meta); err != nil {
+			return err
+		}
+		taken, err := meta.Timestamp()
 		if err != nil {
 			return err
 		}
 
-		entry = &indexEntry{
-			Paths:       make(map[string]struct{}),
-			Size:        info.Size(),
-			Timestamp:   info.ModTime(),
-			ContentType: contentType,
-		}
-	}
-	entry.Paths[path] = struct{}{}
-	if err := putEntry(b, hash, entry); err != nil {
-		return err
+		entry.Timestamp = taken
+		entry.Attachments[ext] = metadata
 	}
 
-	return nil
+	return putEntry(b, hash, entry)
 }
 
 func IndexCat(logger hclog.Logger, indexName string) error {

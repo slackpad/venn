@@ -14,10 +14,26 @@ import (
 const dbPath = "venn.db"
 
 type indexEntry struct {
-	Paths       map[string]struct{}
+	// Paths is a set of files with this hash in the index.
+	Paths map[string]struct{}
+
+	// Attachments is a map from file extension to path thta will be materialized
+	// as <hash>.<extension>.
+	Attachments map[string]string
+
 	Size        int64
 	Timestamp   time.Time
 	ContentType string
+}
+
+func (entry *indexEntry) merge(other *indexEntry) {
+	for p := range other.Paths {
+		entry.Paths[p] = struct{}{}
+	}
+
+	for ext, p := range other.Attachments {
+		entry.Attachments[ext] = p
+	}
 }
 
 func CreateDB(logger hclog.Logger) error {
