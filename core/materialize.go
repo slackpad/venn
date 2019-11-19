@@ -33,6 +33,8 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 		c := b.Cursor()
 	FILES:
 		for k, v := c.First(); k != nil; k, v = c.Next() {
+			bar.Increment()
+
 			entry, err := decodeEntry(v)
 			if err != nil {
 				return err
@@ -93,8 +95,6 @@ func Materialize(logger hclog.Logger, indexName, rootPath string) error {
 					}
 				}
 			}
-
-			bar.Increment()
 		}
 		bar.Finish()
 		return nil
