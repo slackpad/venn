@@ -6,7 +6,7 @@ WARNING! This tool is hacky and only lightly tested - use at your own risk. See 
 
 ## How It Works
 
-Venn uses a single database file for all its work, and allows you to crawl trees of files and index them. You can then use set operations to combine these indexes in various ways, and then you can matrialize them into a standard tree structure. The materialized tree is managed in a content addressable fashion and naturally avoids duplication.
+Venn uses a single database file for all its work, and allows you to crawl trees of files and index them. You can then use set operations to combine these indexes in various ways, and then you can materialize them into a standard tree structure. The materialized tree is managed in a content addressable fashion and naturally avoids duplication.
 
 Here's an example:
 
