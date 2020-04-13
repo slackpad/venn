@@ -218,6 +218,46 @@ func IndexCat(logger hclog.Logger, indexName string) error {
 	})
 }
 
+func IndexChunk(logger hclog.Logger, indexName string, targetIndexPrefix string, chunkSize int) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	count := 0
+	chunk := 0
+	return db.Update(func(tx *bolt.Tx) error {
+		b, err := getBucketForIndex(tx, indexName, "HASHES")
+		if err != nil {
+			return err
+		}
+
+		bo, err := getBucketForIndex(tx, fmt.Sprintf("%s-%d", targetIndexPrefix, chunk), "HASHES")
+		if err != nil {
+			return err
+		}
+
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if err = bo.Put(k, v); err != nil {
+				return err
+			}
+
+			count++
+			if count%chunkSize == 0 {
+				chunk++
+				bo, err = getBucketForIndex(tx, fmt.Sprintf("%s-%d", targetIndexPrefix, chunk), "HASHES")
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 func IndexList(logger hclog.Logger) error {
 	db, err := getDB()
 	if err != nil {
