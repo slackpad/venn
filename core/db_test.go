@@ -27,10 +27,12 @@ func TestIndexEntry_Merge(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name:    "merge with nil other",
-			entry:   &indexEntry{Paths: map[string]struct{}{"path1": {}}},
-			other:   nil,
-			wantNil: false,
+			name:     "merge with nil other",
+			entry:    &indexEntry{Paths: map[string]struct{}{"path1": {}}, Attachments: map[string]string{}},
+			other:    nil,
+			wantNil:  false,
+			wantPath: 1,
+			wantAtt:  0,
 		},
 		{
 			name: "merge paths and attachments",

@@ -9,9 +9,12 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+// setupTestDatabase creates a test database and returns an open connection.
+// Use this for tests that work directly with the database object.
 func setupTestDatabase(t *testing.T) (*bolt.DB, func()) {
 	t.Helper()
 
+	// Use the global database path but ensure cleanup
 	logger := hclog.NewNullLogger()
 	if err := CreateDB(logger); err != nil {
 		t.Fatalf("failed to create test database: %v", err)
@@ -24,10 +27,29 @@ func setupTestDatabase(t *testing.T) (*bolt.DB, func()) {
 
 	cleanup := func() {
 		db.Close()
-		os.Remove(dbPath)
+		// Clean up database file
+		_ = os.Remove(dbPath)
 	}
 
 	return db, cleanup
+}
+
+// initTestDatabase creates a test database for tests that call core functions.
+// The database is created but not kept open, allowing core functions to open it.
+func initTestDatabase(t *testing.T) func() {
+	t.Helper()
+
+	logger := hclog.NewNullLogger()
+	if err := CreateDB(logger); err != nil {
+		t.Fatalf("failed to create test database: %v", err)
+	}
+
+	cleanup := func() {
+		// Clean up database file
+		_ = os.Remove(dbPath)
+	}
+
+	return cleanup
 }
 
 func createTestIndex(t *testing.T, db *bolt.DB, indexName string, hashes map[string]*indexEntry) {
@@ -55,7 +77,7 @@ func createTestIndex(t *testing.T, db *bolt.DB, indexName string, hashes map[str
 }
 
 func TestSetDifference(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	// Create test data
@@ -93,8 +115,17 @@ func TestSetDifference(t *testing.T) {
 		},
 	}
 
-	createTestIndex(t, db, "indexA", indexAData)
-	createTestIndex(t, db, "indexB", indexBData)
+	// Populate test data
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+
+		createTestIndex(t, db, "indexA", indexAData)
+		createTestIndex(t, db, "indexB", indexBData)
+	}()
 
 	logger := hclog.NewNullLogger()
 	err := SetDifference(logger, "result", "indexA", "indexB")
@@ -103,37 +134,45 @@ func TestSetDifference(t *testing.T) {
 	}
 
 	// Verify result contains hash1 and hash3, but not hash2
-	err = db.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketForIndex(tx, "result", hashesBucketKey)
+	func() {
+		db, err := getDB()
 		if err != nil {
-			return err
+			t.Fatalf("failed to open database for verification: %v", err)
 		}
+		defer db.Close()
 
-		// Should have hash1
-		if bucket.Get([]byte("hash1")) == nil {
-			t.Error("result missing hash1")
+		err = db.View(func(tx *bolt.Tx) error {
+			bucket, err := getBucketForIndex(tx, "result", hashesBucketKey)
+			if err != nil {
+				return err
+			}
+
+			// Should have hash1
+			if bucket.Get([]byte("hash1")) == nil {
+				t.Error("result missing hash1")
+			}
+
+			// Should not have hash2
+			if bucket.Get([]byte("hash2")) != nil {
+				t.Error("result contains hash2 (should be excluded)")
+			}
+
+			// Should have hash3
+			if bucket.Get([]byte("hash3")) == nil {
+				t.Error("result missing hash3")
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			t.Fatalf("verification error = %v", err)
 		}
-
-		// Should not have hash2
-		if bucket.Get([]byte("hash2")) != nil {
-			t.Error("result contains hash2 (should be excluded)")
-		}
-
-		// Should have hash3
-		if bucket.Get([]byte("hash3")) == nil {
-			t.Error("result missing hash3")
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatalf("verification error = %v", err)
-	}
+	}()
 }
 
 func TestSetIntersection(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	// Create test data with overlapping entries
@@ -171,8 +210,15 @@ func TestSetIntersection(t *testing.T) {
 		},
 	}
 
-	createTestIndex(t, db, "indexA", indexAData)
-	createTestIndex(t, db, "indexB", indexBData)
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+		createTestIndex(t, db, "indexA", indexAData)
+		createTestIndex(t, db, "indexB", indexBData)
+	}()
 
 	logger := hclog.NewNullLogger()
 	err := SetIntersection(logger, "result", "indexA", "indexB")
@@ -181,46 +227,53 @@ func TestSetIntersection(t *testing.T) {
 	}
 
 	// Verify result contains only hash2
-	err = db.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketForIndex(tx, "result", hashesBucketKey)
+	func() {
+		db, err := getDB()
 		if err != nil {
-			return err
+			t.Fatalf("failed to open database for verification: %v", err)
 		}
+		defer db.Close()
+		err = db.View(func(tx *bolt.Tx) error {
+			bucket, err := getBucketForIndex(tx, "result", hashesBucketKey)
+			if err != nil {
+				return err
+			}
 
-		// Should not have hash1
-		if bucket.Get([]byte("hash1")) != nil {
-			t.Error("result contains hash1 (should be excluded)")
-		}
+			// Should not have hash1
+			if bucket.Get([]byte("hash1")) != nil {
+				t.Error("result contains hash1 (should be excluded)")
+			}
 
-		// Should have hash2
-		if bucket.Get([]byte("hash2")) == nil {
-			t.Error("result missing hash2")
-		}
+			// Should have hash2
+			if bucket.Get([]byte("hash2")) == nil {
+				t.Error("result missing hash2")
+			}
 
-		// Should not have hash3
-		if bucket.Get([]byte("hash3")) != nil {
-			t.Error("result contains hash3 (should be excluded)")
-		}
+			// Should not have hash3
+			if bucket.Get([]byte("hash3")) != nil {
+				t.Error("result contains hash3 (should be excluded)")
+			}
 
-		// Verify merged paths for hash2
-		entry, err := getEntry(bucket, []byte("hash2"))
+			// Verify merged paths for hash2
+			entry, err := getEntry(bucket, []byte("hash2"))
+			if err != nil {
+				return err
+			}
+			if len(entry.Paths) != 2 {
+				t.Errorf("hash2 paths = %v, want 2 (merged)", len(entry.Paths))
+			}
+
+			return nil
+		})
+
 		if err != nil {
-			return err
+			t.Fatalf("verification error = %v", err)
 		}
-		if len(entry.Paths) != 2 {
-			t.Errorf("hash2 paths = %v, want 2 (merged)", len(entry.Paths))
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatalf("verification error = %v", err)
-	}
+	}()
 }
 
 func TestSetUnion(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	indexAData := map[string]*indexEntry{
@@ -257,8 +310,15 @@ func TestSetUnion(t *testing.T) {
 		},
 	}
 
-	createTestIndex(t, db, "indexA", indexAData)
-	createTestIndex(t, db, "indexB", indexBData)
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+		createTestIndex(t, db, "indexA", indexAData)
+		createTestIndex(t, db, "indexB", indexBData)
+	}()
 
 	logger := hclog.NewNullLogger()
 	err := SetUnion(logger, "result", "indexA", "indexB")
@@ -267,45 +327,52 @@ func TestSetUnion(t *testing.T) {
 	}
 
 	// Verify result contains all hashes
-	err = db.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketForIndex(tx, "result", hashesBucketKey)
+	func() {
+		db, err := getDB()
 		if err != nil {
-			return err
+			t.Fatalf("failed to open database for verification: %v", err)
 		}
+		defer db.Close()
+		err = db.View(func(tx *bolt.Tx) error {
+			bucket, err := getBucketForIndex(tx, "result", hashesBucketKey)
+			if err != nil {
+				return err
+			}
 
-		// Should have hash1
-		if bucket.Get([]byte("hash1")) == nil {
-			t.Error("result missing hash1")
-		}
+			// Should have hash1
+			if bucket.Get([]byte("hash1")) == nil {
+				t.Error("result missing hash1")
+			}
 
-		// Should have hash2
-		if bucket.Get([]byte("hash2")) == nil {
-			t.Error("result missing hash2")
-		}
+			// Should have hash2
+			if bucket.Get([]byte("hash2")) == nil {
+				t.Error("result missing hash2")
+			}
 
-		// Should have hash3
-		if bucket.Get([]byte("hash3")) == nil {
-			t.Error("result missing hash3")
-		}
+			// Should have hash3
+			if bucket.Get([]byte("hash3")) == nil {
+				t.Error("result missing hash3")
+			}
 
-		// Verify merged paths and attachments for hash2
-		entry, err := getEntry(bucket, []byte("hash2"))
+			// Verify merged paths and attachments for hash2
+			entry, err := getEntry(bucket, []byte("hash2"))
+			if err != nil {
+				return err
+			}
+			if len(entry.Paths) != 2 {
+				t.Errorf("hash2 paths = %v, want 2 (merged)", len(entry.Paths))
+			}
+			if len(entry.Attachments) != 2 {
+				t.Errorf("hash2 attachments = %v, want 2 (merged)", len(entry.Attachments))
+			}
+
+			return nil
+		})
+
 		if err != nil {
-			return err
+			t.Fatalf("verification error = %v", err)
 		}
-		if len(entry.Paths) != 2 {
-			t.Errorf("hash2 paths = %v, want 2 (merged)", len(entry.Paths))
-		}
-		if len(entry.Attachments) != 2 {
-			t.Errorf("hash2 attachments = %v, want 2 (merged)", len(entry.Attachments))
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatalf("verification error = %v", err)
-	}
+	}()
 }
 
 func TestSetOperations_Errors(t *testing.T) {
@@ -362,13 +429,20 @@ func TestSetOperations_Errors(t *testing.T) {
 }
 
 func TestSetOperations_TargetExists(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	// Create a target index that already exists
-	createTestIndex(t, db, "existing", map[string]*indexEntry{})
-	createTestIndex(t, db, "indexA", map[string]*indexEntry{})
-	createTestIndex(t, db, "indexB", map[string]*indexEntry{})
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+		createTestIndex(t, db, "existing", map[string]*indexEntry{})
+		createTestIndex(t, db, "indexA", map[string]*indexEntry{})
+		createTestIndex(t, db, "indexB", map[string]*indexEntry{})
+	}()
 
 	logger := hclog.NewNullLogger()
 

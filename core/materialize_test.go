@@ -208,7 +208,7 @@ func TestCopyFileWithHash_Errors(t *testing.T) {
 }
 
 func TestMaterialize(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	tmpDir := t.TempDir()
@@ -254,7 +254,14 @@ func TestMaterialize(t *testing.T) {
 		},
 	}
 
-	createTestIndex(t, db, "test-index", indexData)
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+		createTestIndex(t, db, "test-index", indexData)
+	}()
 
 	// Materialize the index
 	outputDir := filepath.Join(tmpDir, "output")
@@ -317,7 +324,7 @@ func TestMaterialize_Errors(t *testing.T) {
 }
 
 func TestMaterialize_WithAttachments(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	tmpDir := t.TempDir()
@@ -353,7 +360,14 @@ func TestMaterialize_WithAttachments(t *testing.T) {
 		},
 	}
 
-	createTestIndex(t, db, "test-index", indexData)
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+		createTestIndex(t, db, "test-index", indexData)
+	}()
 
 	// Materialize
 	outputDir := filepath.Join(tmpDir, "output")
@@ -370,7 +384,7 @@ func TestMaterialize_WithAttachments(t *testing.T) {
 }
 
 func TestMaterialize_SkipExisting(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
+	cleanup := initTestDatabase(t)
 	defer cleanup()
 
 	tmpDir := t.TempDir()
@@ -398,7 +412,14 @@ func TestMaterialize_SkipExisting(t *testing.T) {
 		},
 	}
 
-	createTestIndex(t, db, "test-index", indexData)
+	func() {
+		db, err := getDB()
+		if err != nil {
+			t.Fatalf("failed to open database: %v", err)
+		}
+		defer db.Close()
+		createTestIndex(t, db, "test-index", indexData)
+	}()
 
 	// First materialization
 	outputDir := filepath.Join(tmpDir, "output")
