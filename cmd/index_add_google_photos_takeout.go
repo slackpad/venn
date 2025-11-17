@@ -6,6 +6,7 @@ import (
 	"github.com/slackpad/venn/core"
 )
 
+// IndexAddGooglePhotosTakeout returns a CommandFactory for adding files from a Google Photos Takeout.
 func IndexAddGooglePhotosTakeout(logger hclog.Logger) cli.CommandFactory {
 	return func() (cli.Command, error) {
 		return &indexAddGooglePhotosTakeout{
@@ -19,34 +20,44 @@ type indexAddGooglePhotosTakeout struct {
 }
 
 func (c *indexAddGooglePhotosTakeout) Synopsis() string {
-	return "Adds files to an index from a Google Photos Takeout"
+	return "Add files from a Google Photos Takeout to an index"
 }
 
 func (c *indexAddGooglePhotosTakeout) Help() string {
-	return `
-Recursively scans all of the files in a folder tree and indexes them. The
-index will be created if it doesn't exist, or if it does exist then new
-files will be added to it.
+	return `Usage: venn index add-google-photos-takeout <indexName> <rootPath>
 
-This assumes it's scanning an extracted Google Photos Takeout, so it will
-use the metadata JSON files for the image time stamps, and it will collect
-the metadata files and attach them in any materialized version of the index.
+Recursively scan files from a Google Photos Takeout and add them to an index.
 
-venn index add-google-photos-takeout <indexName> <rootPath>
-	
-indexName: Name of index to use
-rootPath:  Path of the root folder to scan`
+This command is specifically designed for Google Photos Takeout archives. It
+will extract timestamps from the JSON metadata files that accompany photos
+and attach those metadata files to the indexed entries for materialization.
+
+The index will be created if it doesn't exist. If it already exists, new files
+will be added to it.
+
+Arguments:
+  indexName  Name of the index to create or update
+  rootPath   Path to the extracted Google Photos Takeout folder
+
+Example:
+  venn index add-google-photos-takeout photos ~/Downloads/GooglePhotosTakeout
+`
 }
 
 func (c *indexAddGooglePhotosTakeout) Run(args []string) int {
 	if len(args) != 2 {
+		c.logger.Error("incorrect number of arguments")
 		return cli.RunResultHelp
 	}
+
 	indexName := args[0]
 	rootPath := args[1]
+
 	if err := core.IndexAddGooglePhotosTakeout(c.logger, indexName, rootPath); err != nil {
-		c.logger.Error(err.Error())
+		c.logger.Error("failed to add Google Photos takeout to index", "index", indexName, "path", rootPath, "error", err)
 		return 1
 	}
+
+	c.logger.Info("Google Photos takeout added successfully", "index", indexName)
 	return 0
 }
