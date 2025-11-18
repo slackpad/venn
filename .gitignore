@@ -13,3 +13,6 @@
 
 # Project files
 venn.db
+
+# Build artifacts
+venn

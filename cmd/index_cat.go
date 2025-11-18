@@ -6,6 +6,7 @@ import (
 	"github.com/slackpad/venn/core"
 )
 
+// IndexCat returns a CommandFactory for listing files in an index.
 func IndexCat(logger hclog.Logger) cli.CommandFactory {
 	return func() (cli.Command, error) {
 		return &indexCat{
@@ -19,24 +20,38 @@ type indexCat struct {
 }
 
 func (c *indexCat) Synopsis() string {
-	return "Lists files in an index"
+	return "List files in an index"
 }
 
 func (c *indexCat) Help() string {
-	return `
-venn index cat <indexName>
-	
-indexName: Name of index to use`
+	return `Usage: venn index cat <indexName>
+
+Display the contents of an index in a table format.
+
+This command shows all files in the specified index, including their SHA-256
+hash, size, timestamp, content type, and associated file paths. Files with
+the same hash (duplicates) are shown together.
+
+Arguments:
+  indexName  Name of the index to display
+
+Example:
+  venn index cat photos
+`
 }
 
 func (c *indexCat) Run(args []string) int {
 	if len(args) != 1 {
+		c.logger.Error("incorrect number of arguments")
 		return cli.RunResultHelp
 	}
+
 	indexName := args[0]
+
 	if err := core.IndexCat(c.logger, indexName); err != nil {
-		c.logger.Error(err.Error())
+		c.logger.Error("failed to display index", "index", indexName, "error", err)
 		return 1
 	}
+
 	return 0
 }
