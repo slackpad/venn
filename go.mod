@@ -1,8 +1,8 @@
 module github.com/slackpad/venn
 
-go 1.24.0
+go 1.26
 
-toolchain go1.24.7
+toolchain go1.26.2
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.7
