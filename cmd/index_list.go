@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexList returns a CommandFactory for listing all indexes.
-func IndexList(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexList{
-			logger: logger,
-		}, nil
+// IndexList returns a Command for listing all indexes.
+func IndexList(logger hclog.Logger) Command {
+	return &indexList{
+		logger: logger,
 	}
 }
 
@@ -38,7 +35,7 @@ Example:
 func (c *indexList) Run(args []string) int {
 	if len(args) != 0 {
 		c.logger.Error("index ls command takes no arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	if err := core.IndexList(c.logger); err != nil {

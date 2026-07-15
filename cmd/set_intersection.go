@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// SetIntersection returns a CommandFactory for computing set intersection.
-func SetIntersection(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &setIntersection{
-			logger: logger,
-		}, nil
+// SetIntersection returns a Command for computing set intersection.
+func SetIntersection(logger hclog.Logger) Command {
+	return &setIntersection{
+		logger: logger,
 	}
 }
 
@@ -45,7 +42,7 @@ Example:
 func (c *setIntersection) Run(args []string) int {
 	if len(args) != 3 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

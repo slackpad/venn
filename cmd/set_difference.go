@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// SetDifference returns a CommandFactory for computing set difference.
-func SetDifference(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &setDifference{
-			logger: logger,
-		}, nil
+// SetDifference returns a Command for computing set difference.
+func SetDifference(logger hclog.Logger) Command {
+	return &setDifference{
+		logger: logger,
 	}
 }
 
@@ -46,7 +43,7 @@ Example:
 func (c *setDifference) Run(args []string) int {
 	if len(args) != 3 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

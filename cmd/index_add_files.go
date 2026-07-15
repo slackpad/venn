@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexAddFiles returns a CommandFactory for adding files to an index.
-func IndexAddFiles(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexAddFiles{
-			logger: logger,
-		}, nil
+// IndexAddFiles returns a Command for adding files to an index.
+func IndexAddFiles(logger hclog.Logger) Command {
+	return &indexAddFiles{
+		logger: logger,
 	}
 }
 
@@ -44,7 +41,7 @@ Example:
 func (c *indexAddFiles) Run(args []string) int {
 	if len(args) != 2 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

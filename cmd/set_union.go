@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// SetUnion returns a CommandFactory for computing set union.
-func SetUnion(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &setUnion{
-			logger: logger,
-		}, nil
+// SetUnion returns a Command for computing set union.
+func SetUnion(logger hclog.Logger) Command {
+	return &setUnion{
+		logger: logger,
 	}
 }
 
@@ -45,7 +42,7 @@ Example:
 func (c *setUnion) Run(args []string) int {
 	if len(args) != 3 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

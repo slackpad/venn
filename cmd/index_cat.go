@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexCat returns a CommandFactory for listing files in an index.
-func IndexCat(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexCat{
-			logger: logger,
-		}, nil
+// IndexCat returns a Command for listing files in an index.
+func IndexCat(logger hclog.Logger) Command {
+	return &indexCat{
+		logger: logger,
 	}
 }
 
@@ -43,7 +40,7 @@ Example:
 func (c *indexCat) Run(args []string) int {
 	if len(args) != 1 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

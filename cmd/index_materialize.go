@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexMaterialize returns a CommandFactory for materializing an index to a folder.
-func IndexMaterialize(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexMaterialize{
-			logger: logger,
-		}, nil
+// IndexMaterialize returns a Command for materializing an index to a folder.
+func IndexMaterialize(logger hclog.Logger) Command {
+	return &indexMaterialize{
+		logger: logger,
 	}
 }
 
@@ -45,7 +42,7 @@ Example:
 func (c *indexMaterialize) Run(args []string) int {
 	if len(args) != 2 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexDelete returns a CommandFactory for deleting an index.
-func IndexDelete(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexDelete{
-			logger: logger,
-		}, nil
+// IndexDelete returns a Command for deleting an index.
+func IndexDelete(logger hclog.Logger) Command {
+	return &indexDelete{
+		logger: logger,
 	}
 }
 
@@ -42,7 +39,7 @@ Example:
 func (c *indexDelete) Run(args []string) int {
 	if len(args) != 1 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

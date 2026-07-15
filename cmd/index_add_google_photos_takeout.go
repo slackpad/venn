@@ -2,16 +2,13 @@ package cmd
 
 import (
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexAddGooglePhotosTakeout returns a CommandFactory for adding files from a Google Photos Takeout.
-func IndexAddGooglePhotosTakeout(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexAddGooglePhotosTakeout{
-			logger: logger,
-		}, nil
+// IndexAddGooglePhotosTakeout returns a Command for adding files from a Google Photos Takeout.
+func IndexAddGooglePhotosTakeout(logger hclog.Logger) Command {
+	return &indexAddGooglePhotosTakeout{
+		logger: logger,
 	}
 }
 
@@ -47,7 +44,7 @@ Example:
 func (c *indexAddGooglePhotosTakeout) Run(args []string) int {
 	if len(args) != 2 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]

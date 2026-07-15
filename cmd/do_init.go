@@ -4,16 +4,13 @@ import (
 	"fmt"
 
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// DoInit returns a CommandFactory for initializing venn in the current directory.
-func DoInit(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &doInit{
-			logger: logger,
-		}, nil
+// DoInit returns a Command for initializing venn in the current directory.
+func DoInit(logger hclog.Logger) Command {
+	return &doInit{
+		logger: logger,
 	}
 }
 
@@ -41,7 +38,7 @@ Example:
 func (c *doInit) Run(args []string) int {
 	if len(args) != 0 {
 		c.logger.Error("init command takes no arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	if err := core.CreateDB(c.logger); err != nil {

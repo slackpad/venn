@@ -4,16 +4,13 @@ import (
 	"strconv"
 
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/cli"
 	"github.com/slackpad/venn/core"
 )
 
-// IndexChunk returns a CommandFactory for splitting an index into smaller chunks.
-func IndexChunk(logger hclog.Logger) cli.CommandFactory {
-	return func() (cli.Command, error) {
-		return &indexChunk{
-			logger: logger,
-		}, nil
+// IndexChunk returns a Command for splitting an index into smaller chunks.
+func IndexChunk(logger hclog.Logger) Command {
+	return &indexChunk{
+		logger: logger,
 	}
 }
 
@@ -47,7 +44,7 @@ Example:
 func (c *indexChunk) Run(args []string) int {
 	if len(args) != 3 {
 		c.logger.Error("incorrect number of arguments")
-		return cli.RunResultHelp
+		return RunResultHelp
 	}
 
 	indexName := args[0]
