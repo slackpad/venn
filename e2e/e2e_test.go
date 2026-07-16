@@ -105,6 +105,22 @@ func mustInit(t *testing.T, workdir string) {
 	}
 }
 
+// TestInitTwiceFails checks that a second `venn init` in the same directory
+// fails rather than silently reopening the existing database, matching the
+// help text's promise that init fails when a database already exists.
+func TestInitTwiceFails(t *testing.T) {
+	wd := t.TempDir()
+	mustInit(t, wd)
+
+	r := runVenn(t, wd, "init")
+	if r.code != 1 {
+		t.Fatalf("second init: exit %d, want 1, stderr:\n%s", r.code, r.stderr)
+	}
+	if !strings.Contains(r.stderr, "venn is already initialized") {
+		t.Errorf("second init: stderr missing already-initialized error:\n%s", r.stderr)
+	}
+}
+
 // TestFullWorkflow exercises the documented happy path: index two trees that
 // share duplicate content, run every set operation, and materialize the union
 // into a content-addressable tree whose files round-trip by hash.

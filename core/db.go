@@ -22,6 +22,8 @@ const (
 var (
 	// ErrNotInitialized indicates that the venn database has not been initialized
 	ErrNotInitialized = errors.New("venn has not been initialized")
+	// ErrAlreadyInitialized indicates that a venn database already exists
+	ErrAlreadyInitialized = errors.New("venn is already initialized")
 	// ErrNoIndexes indicates that no indexes have been created
 	ErrNoIndexes = errors.New("no indexes have been created")
 	// ErrIndexNotWellFormed indicates the index structure is corrupted
@@ -59,6 +61,10 @@ func (entry *indexEntry) merge(other *indexEntry) {
 
 // CreateDB creates a new venn database file.
 func CreateDB(logger hclog.Logger) error {
+	if _, err := os.Stat(dbPath); err == nil {
+		return ErrAlreadyInitialized
+	}
+
 	db, err := bolt.Open(dbPath, dbFileMode, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create database: %w", err)

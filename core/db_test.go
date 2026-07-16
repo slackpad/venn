@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -162,6 +163,23 @@ func TestCreateDB(t *testing.T) {
 	// Verify database file exists
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		t.Errorf("database file was not created")
+	}
+}
+
+func TestCreateDB_AlreadyInitialized(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	logger := hclog.NewNullLogger()
+
+	// First init creates the database.
+	if err := CreateDB(logger); err != nil {
+		t.Fatalf("CreateDB() first call error = %v", err)
+	}
+
+	// Second init must refuse rather than silently reopen the existing file.
+	err := CreateDB(logger)
+	if !errors.Is(err, ErrAlreadyInitialized) {
+		t.Errorf("CreateDB() second call error = %v, want %v", err, ErrAlreadyInitialized)
 	}
 }
 
