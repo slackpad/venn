@@ -208,8 +208,7 @@ func TestCopyFileWithHash_Errors(t *testing.T) {
 }
 
 func TestMaterialize(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	tmpDir := t.TempDir()
 
@@ -324,8 +323,7 @@ func TestMaterialize_Errors(t *testing.T) {
 }
 
 func TestMaterialize_WithAttachments(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	tmpDir := t.TempDir()
 
@@ -384,8 +382,7 @@ func TestMaterialize_WithAttachments(t *testing.T) {
 }
 
 func TestMaterialize_SkipExisting(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	tmpDir := t.TempDir()
 

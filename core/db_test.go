@@ -149,9 +149,7 @@ func TestDecodeEntry_Errors(t *testing.T) {
 }
 
 func TestCreateDB(t *testing.T) {
-	defer func() {
-		os.Remove(dbPath)
-	}()
+	t.Chdir(t.TempDir())
 
 	logger := hclog.NewNullLogger()
 
@@ -165,14 +163,11 @@ func TestCreateDB(t *testing.T) {
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		t.Errorf("database file was not created")
 	}
-
-	// Clean up
-	os.Remove(dbPath)
 }
 
 func TestGetDB_NotInitialized(t *testing.T) {
-	// Ensure no database file exists
-	os.Remove(dbPath)
+	// A fresh working directory has no venn.db.
+	t.Chdir(t.TempDir())
 
 	_, err := getDB()
 	if err != ErrNotInitialized {
@@ -181,13 +176,14 @@ func TestGetDB_NotInitialized(t *testing.T) {
 }
 
 func TestBucketOperations(t *testing.T) {
+	t.Chdir(t.TempDir())
+
 	// Create a test database
 	logger := hclog.NewNullLogger()
 	err := CreateDB(logger)
 	if err != nil {
 		t.Fatalf("CreateDB() error = %v", err)
 	}
-	defer os.Remove(dbPath)
 
 	db, err := getDB()
 	if err != nil {
@@ -234,13 +230,14 @@ func TestBucketOperations(t *testing.T) {
 }
 
 func TestDeleteBucketForIndex(t *testing.T) {
+	t.Chdir(t.TempDir())
+
 	// Create a test database
 	logger := hclog.NewNullLogger()
 	err := CreateDB(logger)
 	if err != nil {
 		t.Fatalf("CreateDB() error = %v", err)
 	}
-	defer os.Remove(dbPath)
 
 	db, err := getDB()
 	if err != nil {

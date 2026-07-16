@@ -134,8 +134,7 @@ func TestCountFiles_NonExistentPath(t *testing.T) {
 }
 
 func TestIndexAddFiles(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	tmpDir := t.TempDir()
 
@@ -230,8 +229,7 @@ func TestIndexAddFiles_Errors(t *testing.T) {
 }
 
 func TestIndexCat(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create test index with data
 	hash := sha256.Sum256([]byte("test content"))
@@ -274,8 +272,7 @@ func TestIndexCat_EmptyIndexName(t *testing.T) {
 }
 
 func TestIndexChunk(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create test index with multiple entries
 	indexData := make(map[string]*indexEntry)
@@ -385,8 +382,7 @@ func TestIndexChunk_Errors(t *testing.T) {
 }
 
 func TestIndexList(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create multiple indexes
 	indexNames := []string{"index1", "index2", "index3"}
@@ -411,8 +407,7 @@ func TestIndexList(t *testing.T) {
 }
 
 func TestIndexStats(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create test index with various content types
 	hash1 := sha256.Sum256([]byte("content1"))
@@ -469,8 +464,7 @@ func TestIndexStats_EmptyIndexName(t *testing.T) {
 }
 
 func TestIndexDelete(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create test index
 	func() {
@@ -518,8 +512,7 @@ func TestIndexDelete_EmptyIndexName(t *testing.T) {
 }
 
 func TestMakeFileEntry(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
-	defer cleanup()
+	db := setupTestDatabase(t)
 
 	tmpDir := t.TempDir()
 	logger := hclog.NewNullLogger()

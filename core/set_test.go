@@ -1,7 +1,6 @@
 package core
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -9,12 +8,14 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// setupTestDatabase creates a test database and returns an open connection.
-// Use this for tests that work directly with the database object.
-func setupTestDatabase(t *testing.T) (*bolt.DB, func()) {
+// setupTestDatabase creates a test database in a temporary working directory
+// and returns an open connection. Use this for tests that work directly with
+// the database object. The working directory (and the venn.db within it) is
+// removed automatically when the test finishes.
+func setupTestDatabase(t *testing.T) *bolt.DB {
 	t.Helper()
+	t.Chdir(t.TempDir())
 
-	// Use the global database path but ensure cleanup
 	logger := hclog.NewNullLogger()
 	if err := CreateDB(logger); err != nil {
 		t.Fatalf("failed to create test database: %v", err)
@@ -24,32 +25,23 @@ func setupTestDatabase(t *testing.T) (*bolt.DB, func()) {
 	if err != nil {
 		t.Fatalf("failed to open test database: %v", err)
 	}
+	t.Cleanup(func() { db.Close() })
 
-	cleanup := func() {
-		db.Close()
-		// Clean up database file
-		_ = os.Remove(dbPath)
-	}
-
-	return db, cleanup
+	return db
 }
 
-// initTestDatabase creates a test database for tests that call core functions.
-// The database is created but not kept open, allowing core functions to open it.
-func initTestDatabase(t *testing.T) func() {
+// initTestDatabase creates a test database in a temporary working directory for
+// tests that call core functions. The database is created but not kept open,
+// allowing core functions to open it themselves; the working directory is
+// removed automatically when the test finishes.
+func initTestDatabase(t *testing.T) {
 	t.Helper()
+	t.Chdir(t.TempDir())
 
 	logger := hclog.NewNullLogger()
 	if err := CreateDB(logger); err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
-
-	cleanup := func() {
-		// Clean up database file
-		_ = os.Remove(dbPath)
-	}
-
-	return cleanup
 }
 
 func createTestIndex(t *testing.T, db *bolt.DB, indexName string, hashes map[string]*indexEntry) {
@@ -77,8 +69,7 @@ func createTestIndex(t *testing.T, db *bolt.DB, indexName string, hashes map[str
 }
 
 func TestSetDifference(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create test data
 	indexAData := map[string]*indexEntry{
@@ -172,8 +163,7 @@ func TestSetDifference(t *testing.T) {
 }
 
 func TestSetIntersection(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create test data with overlapping entries
 	indexAData := map[string]*indexEntry{
@@ -273,8 +263,7 @@ func TestSetIntersection(t *testing.T) {
 }
 
 func TestSetUnion(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	indexAData := map[string]*indexEntry{
 		"hash1": {
@@ -429,8 +418,7 @@ func TestSetOperations_Errors(t *testing.T) {
 }
 
 func TestSetOperations_TargetExists(t *testing.T) {
-	cleanup := initTestDatabase(t)
-	defer cleanup()
+	initTestDatabase(t)
 
 	// Create a target index that already exists
 	func() {
@@ -469,8 +457,7 @@ func TestSetOperations_TargetExists(t *testing.T) {
 }
 
 func TestMergeFunction(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
-	defer cleanup()
+	db := setupTestDatabase(t)
 
 	err := db.Update(func(tx *bolt.Tx) error {
 		firstBucket, err := getBucketForIndex(tx, "first", hashesBucketKey)
@@ -533,8 +520,7 @@ func TestMergeFunction(t *testing.T) {
 }
 
 func TestIntersectFunction(t *testing.T) {
-	db, cleanup := setupTestDatabase(t)
-	defer cleanup()
+	db := setupTestDatabase(t)
 
 	err := db.Update(func(tx *bolt.Tx) error {
 		firstBucket, err := getBucketForIndex(tx, "first", hashesBucketKey)
